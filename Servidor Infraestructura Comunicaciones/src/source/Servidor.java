@@ -146,7 +146,7 @@ public class Servidor
                 Conexion e = ( Conexion )iter.next( );
                 if( e.getEstadoSesion() )
                 {
-                e.cerrarSesion();	
+                e.cerrarSesion("Desconexión");	
                 }
             }
             conexiones.clear();
