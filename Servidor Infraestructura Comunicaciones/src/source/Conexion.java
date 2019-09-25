@@ -17,11 +17,11 @@ import java.net.Socket;
  */
 public class Conexion extends Thread
 {
-	private final static int TIMEOUT = 120000;
+	private final static int TIMEOUT = 1000;
 	private final static String DESCARGA= "DESCARGA";
 	private final static String MULTIPLE= "MULTIPLE";
 	private final static String SALIR= "SALIR";
-	
+
 	/**
 	 * Atributo que contiene el socket de la conexión.
 	 */
@@ -41,6 +41,18 @@ public class Conexion extends Thread
 	 * Atributo que determina el estado de la sesión, true si está conectado, false si está desconectado.
 	 */
 	private boolean estadoSesion;
+	
+	private String nomArchivos;
+
+	/**
+	 * Modela el servidor
+	 */
+	private Servidor servidor;
+
+	/**
+	 * Modela la id de la conexión
+	 */
+	private int id;
 
 	// -----------------------------------------------------------------
 	// Constructor
@@ -52,12 +64,15 @@ public class Conexion extends Thread
 	 * @param administrador Parámetro de la clase que conecta el programa con la base de datos.
 	 * @throws IOException Excepción que pueda ser generada debido al lector y escritor.
 	 */
-	public Conexion (Socket canal) throws IOException
+	public Conexion (Socket canal, int pId, Servidor pServidor, String nomArchivos) throws IOException
 	{
 		setOut(new PrintWriter( canal.getOutputStream( ), true ));
 		setIn(new BufferedReader( new InputStreamReader( canal.getInputStream( ) ) ));
 		setSocket(canal);
 		setEstadoSesion(true);
+		this.id = pId;
+		this.servidor = pServidor;
+		this.nomArchivos = nomArchivos;
 	}
 
 	/**
@@ -89,37 +104,44 @@ public class Conexion extends Thread
 		try
 		{
 			//Tiempo de timeout igual a 2 minutos
-			out.println("Sesión iniciada con el servidor");
+			//System.out.println(in.readLine());
+			out.println("HOLA");
+			String archivos = "ARCHIVOS:"+nomArchivos;
+			out.println(archivos);
+			System.out.println(archivos);
 			while(estadoSesion)
 			{	
-				//Se inicia timer
-				long start = System.currentTimeMillis();
-				
-				//Se recibe la solicitud de un metodo
-				String metodoSolicitado = in.readLine();
-				
-				//Se para el timer
-				long end = System.currentTimeMillis();
-				
-				//Se calcula el tiempo iddle del usuario
-				long duration = (end - start);
-				
-				//Si el tiempo supera el de timeout se cierra la sesión
-				if(duration >= TIMEOUT)
+				if(verificarEnvioMultiple())
 				{
-					cerrarSesion("Se superó el tiempo de sesión sin actividad");
-				}
-				else if(metodoSolicitado.contains(DESCARGA))
-				{
-					enviarImagen(metodoSolicitado);
-				}
-				else if (metodoSolicitado.equals(MULTIPLE))
-				{
-					setUpEnvioMultiple(metodoSolicitado);
-				}
-				else if(metodoSolicitado.equals(SALIR))
-				{
-					cerrarSesion("Sesión cerrada por usuario");
+					//Se inicia timer
+					long start = System.currentTimeMillis();
+
+					//Se recibe la solicitud de un metodo
+					String metodoSolicitado = in.readLine();
+
+					//Se para el timer
+					long end = System.currentTimeMillis();
+
+					//Se calcula el tiempo iddle del usuario
+					long duration = (end - start);
+
+					//Si el tiempo supera el de timeout se cierra la sesión
+					if(duration >= TIMEOUT)
+					{
+						cerrarSesion("Se superó el tiempo de sesión sin actividad");
+					}
+					else if(metodoSolicitado.contains(DESCARGA))
+					{
+						enviarImagen(metodoSolicitado);
+					}
+					else if (metodoSolicitado.equals(MULTIPLE))
+					{
+						setUpEnvioMultiple(metodoSolicitado);
+					}
+					else if(metodoSolicitado.equals(SALIR))
+					{
+						cerrarSesion("Sesión cerrada por usuario");
+					}
 				}
 			}
 		}
@@ -141,10 +163,22 @@ public class Conexion extends Thread
 		}
 	}
 
+	/**
+	 * @return
+	 */
+	private boolean verificarEnvioMultiple() 
+	{
+		//servidor.configurarEnvioMultiple(metodoSolicitado)
+		return false;
+	}
+
+	/**
+	 * Hace las preparaciones para realizar un envio multiple
+	 * @param metodoSolicitado
+	 */
 	private void setUpEnvioMultiple(String metodoSolicitado) 
 	{
-		// TODO Auto-generated method stub
-
+		servidor.configurarEnvioMultiple(metodoSolicitado);
 	}
 
 	/**
@@ -153,18 +187,14 @@ public class Conexion extends Thread
 	 */
 	private void enviarImagen(String metodoSolicitado)
 	{
-		File myFile;
-		if (metodoSolicitado.split("-")[1].equals("1"))
-		{
-			myFile = new File ("./data/imagen");
-		}
-		else
-		{
-			myFile = new File ("./data/video");
-		}
+		
+		String fileSolicitado = metodoSolicitado.split(":")[1];
+		File myFile = new File ("./data/"+fileSolicitado);
+		String hash = servidor.getHashes().get(fileSolicitado);
 
 		try
 		{
+			//enviar systemcurrectmilisw
 			//Enviar el archivo
 			byte [] mybytearray  = new byte [(int)myFile.length()];
 			FileInputStream fis = new FileInputStream(myFile);
@@ -173,6 +203,11 @@ public class Conexion extends Thread
 			OutputStream os = socket.getOutputStream();
 			os.write(mybytearray,0,mybytearray.length);
 
+			//Enviar hash del archivo
+			out.println(hash);
+
+			//eperar un ok o error
+			
 			//Cerrar buffer, output y input que fueron usados para enviar el file
 			os.flush();
 			bis.close();
