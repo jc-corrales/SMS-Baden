@@ -51,6 +51,16 @@ public class Servidor
 	private static boolean status;
 
 	/**
+	 * Numero de clientes a los que les falta recibir el envio multiple
+	 */
+	private int numeroClientesFaltantesEnvioMultiple;
+	
+	/**
+	 * Numero de clientes a los que les falta recibir el envio multiple
+	 */
+	private int numeroClientesEnvioMultiple;
+	
+	/**
 	 * Es una colección con las conexiones que se están llevando a cabo en este momento
 	 */
 	protected Collection <Conexion> conexiones;
@@ -71,6 +81,11 @@ public class Servidor
 	private StringBuilder nombreArchMult;
 
 	/**
+	 * Modela un string donde se contienen todos los nombres de los archivos disponibles para descargar
+	 */
+	private String nombresArchivosDisponibles;
+	
+	/**
 	 * Atributo que guarda la información de una nueva conexión.
 	 */
 	private Conexion nuevaConexion;
@@ -81,11 +96,15 @@ public class Servidor
 	 */
 	public Servidor (String archivo) throws Exception
 	{
-		envioMultiple = false;
 		//Inicializar lista de hashes
 		hashes = new LinkedHashMap<>();
 		generarHashes();
-
+		envioMultiple = false;
+		numeroClientesEnvioMultiple = 0;
+		numeroClientesFaltantesEnvioMultiple = 0;
+		nombresArchivosDisponibles = darNomArchivos();
+		
+		
 		//Inicializar lista conecciones y cargar conf de archivo
 		conexiones = new Vector <Conexion> ();
 		//cargarConfiguracion(archivo);
@@ -105,9 +124,8 @@ public class Servidor
 			for (String nombreArchivo : result)
 			{
 				File file = new File(nombreArchivo);
-				
-				hashes.put(nombreArchivo, darHashFile(file));
-				System.out.println(nombreArchivo);
+				String nomGuardar = nombreArchivo.replace(".\\data\\","");
+				hashes.put(nomGuardar, darHashFile(file));
 			}
 
 		} 
@@ -261,18 +279,16 @@ public class Servidor
 		ExecutorService exec = Executors.newFixedThreadPool(numT);
 		System.out.println("Creado pool de tamaño "+ numT);
 		int idThread = 0;
-
 		status = true;
 		try
 		{
 			Servidor servidor = new Servidor("");
 			puntoDeEntrada = new ServerSocket(PUERTO);
-			while(true)
+			while(status)
 			{
 				Socket cliente = puntoDeEntrada.accept();
 				System.out.println("Cliente " + idThread + " inició sesión.");
-				String nombArchivos = servidor.darNomArchivos();
-				Conexion con = new Conexion(cliente,idThread, servidor, nombArchivos);
+				Conexion con = new Conexion(cliente,idThread, servidor, servidor.nombresArchivosDisponibles);
 				exec.execute(con);
 				idThread++;
 				servidor.conexiones.add(con);
@@ -284,6 +300,10 @@ public class Servidor
 		}
 	}
 
+	/**
+	 * Genera el nomArchivos
+	 * @return
+	 */
 	private String darNomArchivos()
 	{
 		StringBuilder ret = new StringBuilder();
@@ -323,6 +343,10 @@ public class Servidor
 		}
 		else
 		{
+			String[] data = metodoSolicitado.split(":");
+			numeroClientesFaltantesEnvioMultiple = Integer.parseInt(data[2]);
+			numeroClientesEnvioMultiple = Integer.parseInt(data[2]);
+			nombreArchMult = new StringBuilder(data[1]);
 			envioMultiple = true;
 			return "ok";
 		}
@@ -331,5 +355,52 @@ public class Servidor
 	public boolean darMultiple()
 	{
 		return envioMultiple;
+	}
+
+	/**
+	 * @return the nombreArchMult
+	 */
+	public StringBuilder getNombreArchMult() {
+		return nombreArchMult;
+	}
+
+	/**
+	 * @param nombreArchMult the nombreArchMult to set
+	 */
+	public void setNombreArchMult(StringBuilder nombreArchMult) {
+		this.nombreArchMult = nombreArchMult;
+	}
+
+	/**
+	 * @return the numeroClientesFaltantesEnvioMultiple
+	 */
+	public int getNumeroClientesFaltantesEnvioMultiple() {
+		return numeroClientesFaltantesEnvioMultiple;
+	}
+
+	/**
+	 * @param numeroClientesFaltantesEnvioMultiple the numeroClientesFaltantesEnvioMultiple to set
+	 */
+	public void setNumeroClientesFaltantesEnvioMultiple(int numeroClientesFaltantesEnvioMultiple) {
+		this.numeroClientesFaltantesEnvioMultiple = numeroClientesFaltantesEnvioMultiple;
+	}
+
+	/**
+	 * @return the numeroClientesEnvioMultiple
+	 */
+	public int getNumeroClientesEnvioMultiple() {
+		return numeroClientesEnvioMultiple;
+	}
+
+	/**
+	 * @param numeroClientesEnvioMultiple the numeroClientesEnvioMultiple to set
+	 */
+	public void setNumeroClientesEnvioMultiple(int numeroClientesEnvioMultiple) {
+		this.numeroClientesEnvioMultiple = numeroClientesEnvioMultiple;
+	}
+
+	public void envioMultipleCompletado()
+	{
+		envioMultiple = false;
 	}
 }

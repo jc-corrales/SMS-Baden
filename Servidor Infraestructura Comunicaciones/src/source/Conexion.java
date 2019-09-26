@@ -17,9 +17,8 @@ import java.net.Socket;
  */
 public class Conexion extends Thread
 {
-	private final static int TIMEOUT = 1000;
+	private final static int TIMEOUT = 12000;
 	private final static String DESCARGA= "DESCARGA";
-	private final static String MULTIPLE= "MULTIPLE";
 	private final static String SALIR= "SALIR";
 
 	/**
@@ -73,6 +72,7 @@ public class Conexion extends Thread
 		this.id = pId;
 		this.servidor = pServidor;
 		this.nomArchivos = nomArchivos;
+		socket.setSoTimeout(TIMEOUT);
 	}
 
 	/**
@@ -111,7 +111,7 @@ public class Conexion extends Thread
 			System.out.println(archivos);
 			while(estadoSesion)
 			{	
-				if(verificarEnvioMultiple())
+				if(!sePuedeHacerEnvioMultiple())
 				{
 					//Se inicia timer
 					long start = System.currentTimeMillis();
@@ -130,11 +130,11 @@ public class Conexion extends Thread
 					{
 						cerrarSesion("Se superó el tiempo de sesión sin actividad");
 					}
-					else if(metodoSolicitado.contains(DESCARGA))
+					else if(metodoSolicitado.contains(DESCARGA) && metodoSolicitado.split(":").length == 2)
 					{
-						enviarImagen(metodoSolicitado);
+						enviarImagen(metodoSolicitado.split(":")[1]);
 					}
-					else if (metodoSolicitado.equals(MULTIPLE))
+					else if(metodoSolicitado.contains(DESCARGA) && metodoSolicitado.split(":").length == 3)
 					{
 						setUpEnvioMultiple(metodoSolicitado);
 					}
@@ -142,6 +142,12 @@ public class Conexion extends Thread
 					{
 						cerrarSesion("Sesión cerrada por usuario");
 					}
+				}
+				else
+				{
+					disminuirCLientesFaltantes();
+					enviarImagen(servidor.getNombreArchMult().toString());
+					
 				}
 			}
 		}
@@ -164,12 +170,24 @@ public class Conexion extends Thread
 	}
 
 	/**
-	 * @return
+	 * Disminuye los clientes faltantes por recibir el arch
 	 */
-	private boolean verificarEnvioMultiple() 
+	private synchronized void disminuirCLientesFaltantes()
 	{
-		//servidor.configurarEnvioMultiple(metodoSolicitado)
-		return false;
+		int numClientes = servidor.getNumeroClientesFaltantesEnvioMultiple()-1;
+		servidor.setNumeroClientesFaltantesEnvioMultiple(numClientes);
+		if(numClientes == 0)
+		{
+			servidor.envioMultipleCompletado();
+		}
+	}
+
+	/**
+	 * @return si el serv va a hacer envio mult
+	 */
+	private boolean sePuedeHacerEnvioMultiple() 
+	{
+		return (servidor.darMultiple() && servidor.darListaDeUsuariosConectados().size() >= servidor.getNumeroClientesEnvioMultiple() && servidor.getNumeroClientesFaltantesEnvioMultiple() != 0);
 	}
 
 	/**
@@ -185,16 +203,16 @@ public class Conexion extends Thread
 	 * Envia la imagen al usuario
 	 * @param metodoSolicitado
 	 */
-	private void enviarImagen(String metodoSolicitado)
+	private void enviarImagen(String linkFike)
 	{
-		
-		String fileSolicitado = metodoSolicitado.split(":")[1];
-		File myFile = new File ("./data/"+fileSolicitado);
-		String hash = servidor.getHashes().get(fileSolicitado);
+		File myFile = new File ("./data/"+linkFike);
+		String hash = servidor.getHashes().get(linkFike);
 
 		try
 		{
 			//enviar systemcurrectmilisw
+			out.println(System.currentTimeMillis());
+			
 			//Enviar el archivo
 			byte [] mybytearray  = new byte [(int)myFile.length()];
 			FileInputStream fis = new FileInputStream(myFile);
