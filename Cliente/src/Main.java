@@ -5,6 +5,7 @@ public class Main {
 
 	public final static String IP = "157.253.218.40";
 	public final static String DESCARGA = "DESCARGA";
+	public final static String MULTIPLE = "DESCARGA";
 	public final static String HOLA = "HOLA";
 	public final static int PUERTO = 11000;
 	private Socket canal;
@@ -13,11 +14,14 @@ public class Main {
 	public boolean estado;
 	public String[] archivos;
 	public int numero;
-	public boolean simple;
-	
+	public boolean multiple;
+	public long tiempo;
+	public File file;
+
 	public Main()
 	{
 		estado = false;
+		multiple = false;
 		archivos= new String[1];
 	}
 
@@ -38,15 +42,82 @@ public class Main {
 		if(linea.startsWith(HOLA))
 		{
 			estado = true;
+			numero = Integer.parseInt(linea.split(":")[1]);
 		}
 		linea = inCliente.readLine();
-		System.out.println(linea);
-		if(linea.startsWith("ARCHIVOS"))
+		if(linea.startsWith("ESTADO"))
 		{
-			archivos = linea.split(":")[1].split(";");
+			String aux = linea.split(":")[1];
+			if(aux.equals("MULTPIPLE"))
+			{
+				multiple = true;
+				seguimientoMultiple();
+			}
+			else
+			{
+				linea = inCliente.readLine();
+				if(linea.startsWith("ARCHIVOS"))
+				{
+					archivos = linea.split(":")[1].split(";");
+				}
+			}
 		}
 
 
+
+
+	}
+
+	public void seguimientoMultiple() throws IOException {
+		// TODO Auto-generated method stub
+		//Como sea que se lee el archivo.
+		String linea = inCliente.readLine();
+		//No hacer nada con eso por ahora
+		tiempo = System.currentTimeMillis();
+		linea = inCliente.readLine();
+		tiempo = tiempo - Long.parseLong(linea);
+		linea = inCliente.readLine();
+		
+		if(file.hashCode()== Integer.parseInt(linea))
+		{
+			outCliente.write("OK");
+		}
+	}
+
+	public void inicioSimple(String archivo) throws IOException 
+	{
+
+		outCliente.write(DESCARGA + ":" +  archivo);
+		//Como sea que se lee el archivo.
+		String linea = inCliente.readLine();
+		//No hacer nada con eso por ahora
+		tiempo = System.currentTimeMillis();
+		linea = inCliente.readLine();
+		tiempo = tiempo - Long.parseLong(linea);
+		linea = inCliente.readLine();
+		
+		if(file.hashCode()== Integer.parseInt(linea))
+		{
+			outCliente.write("OK");
+		}
+		
+	} 
+
+	public void inicioMultiple(String archivo, String numeroClientes) throws IOException 
+	{
+		outCliente.write(MULTIPLE +  ":" +  numeroClientes + ":" +  archivo);
+		//Como sea que se lee el archivo.
+		String linea = inCliente.readLine();
+		//No hacer nada con eso por ahora
+		tiempo = System.currentTimeMillis();
+		linea = inCliente.readLine();
+		tiempo = tiempo - Long.parseLong(linea);
+		linea = inCliente.readLine();
+		
+		if(file.hashCode()== Integer.parseInt(linea))
+		{
+			outCliente.write("OK");
+		}
 
 	}
 
@@ -76,11 +147,5 @@ public class Main {
 		{
 
 		}
-	}
-	public void pedirArchivo(String archivo) throws IOException
-	{
-		System.out.println(archivo);
-		outCliente.write(DESCARGA + ":" + archivo);
-		String linea = inCliente.readLine();
 	}
 }

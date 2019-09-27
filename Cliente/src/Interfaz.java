@@ -14,7 +14,9 @@ public class Interfaz extends JFrame implements ActionListener {
 
 	private Main mundo;
 	private JLabel estado2;
+	private JTextField numero;
 	private JButton descargar;
+	private JButton probar;
 	private JButton conectar;
 	private JList<String> lista;
 	public Interfaz()
@@ -44,13 +46,28 @@ public class Interfaz extends JFrame implements ActionListener {
 		archivos.setLayout(new BorderLayout());
 		archivos.setBorder( new TitledBorder( "Archivos" ) );
 		lista = new JList<String>(mundo.archivos);
-		lista.setPreferredSize(new Dimension(560, 150));
+		lista.setPreferredSize(new Dimension(350, 150));
 		archivos.setPreferredSize(new Dimension(560, 200));
-		archivos.add(lista, BorderLayout.NORTH);
+		archivos.add(lista, BorderLayout.WEST);
+		JPanel clientes = new JPanel();
+		clientes.setLayout(new GridLayout(2,1));
+		JLabel info = new JLabel("Numero de clientes \n para la prueba:");
+		numero = new JTextField();
+		clientes.add(info);
+		clientes.add(numero);
+		archivos.add(clientes, BorderLayout.EAST);
+		
+		JPanel opciones = new JPanel();
+		opciones.setLayout(new GridLayout(1,2));
 		descargar = new JButton("Descargar");
 		descargar.setActionCommand("DESCARGAR");
 		descargar.addActionListener(this);
-		archivos.add(descargar, BorderLayout.SOUTH);
+		probar = new JButton("Probar");
+		probar.setActionCommand("PROBAR");
+		probar.addActionListener(this);
+		opciones.add(descargar);
+		opciones.add(probar);
+		archivos.add(opciones, BorderLayout.SOUTH);
 		
 		add(archivos, BorderLayout.CENTER);
 		
@@ -93,7 +110,7 @@ public class Interfaz extends JFrame implements ActionListener {
 		if(accion.equals("DESCARGAR"))
 		{
 			try {
-				mundo.pedirArchivo(lista.getSelectedValue());
+				mundo.inicioSimple(lista.getSelectedValue());
 			} catch (IOException e1) {
 
 			}
@@ -102,6 +119,15 @@ public class Interfaz extends JFrame implements ActionListener {
 		{
 			try {
 				mundo.establecerConexion();
+				actualizar();
+			} catch (IOException e1) {
+
+			}
+		}
+		else if(accion.equals("PROBAR"))
+		{
+			try {
+				mundo.inicioMultiple(lista.getSelectedValue(), numero.getText());;
 				actualizar();
 			} catch (IOException e1) {
 
