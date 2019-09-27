@@ -345,9 +345,9 @@ public class Servidor
 		else
 		{
 			String[] data = metodoSolicitado.split(":");
-			numeroClientesFaltantesEnvioMultiple = Integer.parseInt(data[2]);
-			numeroClientesEnvioMultiple = Integer.parseInt(data[2]);
-			nombreArchMult = new StringBuilder(data[1]);
+			numeroClientesFaltantesEnvioMultiple = Integer.parseInt(data[1]);
+			numeroClientesEnvioMultiple = Integer.parseInt(data[1]);
+			nombreArchMult = new StringBuilder(data[2]);
 			envioMultiple = true;
 			return "ok";
 		}

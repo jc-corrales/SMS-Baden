@@ -19,7 +19,8 @@ import java.sql.Timestamp;
 public class Conexion extends Thread
 {
 	private final static int TIMEOUT = 12000;
-	private final static String DESCARGA= "DESCARGA";
+	private final static String DESCARGA= "DESCARGAR";
+	private final static String MULTIPLE= "MULTIPLE";
 	private final static String SALIR= "SALIR";
 
 	/**
@@ -41,7 +42,7 @@ public class Conexion extends Thread
 	 * Atributo que determina el estado de la sesión, true si está conectado, false si está desconectado.
 	 */
 	private boolean estadoSesion;
-	
+
 	private String nomArchivos;
 
 	/**
@@ -123,7 +124,7 @@ public class Conexion extends Thread
 			socket.close();
 			tiempoFin = System.currentTimeMillis();
 			long tiempoDeTransferencia = tiempoFin - tiempoInicio;
-//			EscritorDeLog escritor = new EscritorDeLog(id, timestamp, nomArchivos, tamanioArchivo, cliente, estadoExito, tiempoDeTransferencia, numeroDePaquetesEnviados, numeroDePaquetesRecibidos, numeroDePaquetesTransmitidos, bytesRecibidos, bytesTransmitidos);
+			//			EscritorDeLog escritor = new EscritorDeLog(id, timestamp, nomArchivos, tamanioArchivo, cliente, estadoExito, tiempoDeTransferencia, numeroDePaquetesEnviados, numeroDePaquetesRecibidos, numeroDePaquetesTransmitidos, bytesRecibidos, bytesTransmitidos);
 		}
 		catch (IOException e)
 		{		
@@ -141,14 +142,26 @@ public class Conexion extends Thread
 		{
 			//Tiempo de timeout igual a 2 minutos
 			//System.out.println(in.readLine());
-			out.println("HOLA");
-			String archivos = "ARCHIVOS:"+nomArchivos;
-			out.println(archivos);
-			System.out.println(archivos);
+			out.println("HOLA"+id);
+			StringBuilder estado = new StringBuilder();
+			if(servidor.darMultiple())
+			{
+				estado.append("MULTIPLE");
+			}
+			else
+			{
+				estado.append("SIMPLE");
+			}
+			out.println("ESTADO:"+estado.toString());
+
 			while(estadoSesion)
 			{	
-				if(!sePuedeHacerEnvioMultiple())
+				if(!servidor.darMultiple())
 				{
+					String archivos = "ARCHIVOS:"+nomArchivos;
+					out.println(archivos);
+					System.out.println(archivos);
+
 					//Se inicia timer
 					long start = System.currentTimeMillis();
 
@@ -166,11 +179,11 @@ public class Conexion extends Thread
 					{
 						cerrarSesion("Se superó el tiempo de sesión sin actividad");
 					}
-					else if(metodoSolicitado.contains(DESCARGA) && metodoSolicitado.split(":").length == 2)
+					else if(metodoSolicitado.contains(DESCARGA))
 					{
 						enviarImagen(metodoSolicitado.split(":")[1]);
 					}
-					else if(metodoSolicitado.contains(DESCARGA) && metodoSolicitado.split(":").length == 3)
+					else if(metodoSolicitado.contains(MULTIPLE))
 					{
 						setUpEnvioMultiple(metodoSolicitado);
 					}
@@ -182,9 +195,11 @@ public class Conexion extends Thread
 				}
 				else
 				{
-					disminuirCLientesFaltantes();
-					enviarImagen(servidor.getNombreArchMult().toString());
-					
+					if(sePuedeHacerEnvioMultiple())
+					{
+						disminuirCLientesFaltantes();
+						enviarImagen(servidor.getNombreArchMult().toString());
+					}	
 				}
 			}
 		}
@@ -247,9 +262,11 @@ public class Conexion extends Thread
 
 		try
 		{
-			//enviar systemcurrectmilisw
-			out.println(System.currentTimeMillis());
+			//Se inicia timer
+			long start = System.currentTimeMillis();
+
 			tamanioArchivo = (int)myFile.length();
+
 			//Enviar el archivo
 			byte [] mybytearray  = new byte [(int)myFile.length()];
 			FileInputStream fis = new FileInputStream(myFile);
@@ -257,11 +274,19 @@ public class Conexion extends Thread
 			bis.read(mybytearray,0,mybytearray.length);
 			OutputStream os = socket.getOutputStream();
 			os.write(mybytearray,0,mybytearray.length);
-			
+
+			//Se para el timer
+			long end = System.currentTimeMillis();
+
+			//Se calcula el tiempo iddle del usuario
+			long duration = (end - start);
+
+			out.println(duration);
+
 			//Enviar hash del archivo
 			out.println(hash);
 			//eperar un ok o error
-			
+
 			//Cerrar buffer, output y input que fueron usados para enviar el file
 			os.flush();
 			bis.close();
