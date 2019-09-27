@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.sql.Timestamp;
 
 /**
  * Modela una conexión entre 1 cliente y el servidor
@@ -47,11 +48,38 @@ public class Conexion extends Thread
 	 * Modela el servidor
 	 */
 	private Servidor servidor;
-
+	/**
+	 * Tiempo de inicio de la conexión.
+	 */
+	private long tiempoInicio;
+	/**
+	 * Tiempo de finalización de la conexión.
+	 */
+	private long tiempoFin;
+	/**
+	 * Fecha y hora de la conexion.
+	 */
+	private Timestamp timestamp;
 	/**
 	 * Modela la id de la conexión
 	 */
 	private int id;
+	/**
+	 * Atributo que contiene si el envío fue exitoso o no.
+	 */
+	private boolean estadoExito;
+	/**
+	 * Atributo que contiene el tamaño del archivo a enviar.
+	 */
+	private double tamanioArchivo;
+	/**
+	 * Atributo que cuenta el número de bytes recibidos.
+	 */	
+	private long bytesRecibidos;
+	/**
+	 * Atributo que cuenta el número de bytes transmitidos.
+	 */
+	private long bytesTransmitidos;
 
 	// -----------------------------------------------------------------
 	// Constructor
@@ -65,6 +93,10 @@ public class Conexion extends Thread
 	 */
 	public Conexion (Socket canal, int pId, Servidor pServidor, String nomArchivos) throws IOException
 	{
+		tamanioArchivo = 0;
+		Long puntoDeInicio = System.currentTimeMillis();
+		timestamp = new Timestamp(puntoDeInicio);
+		tiempoInicio = puntoDeInicio;
 		setOut(new PrintWriter( canal.getOutputStream( ), true ));
 		setIn(new BufferedReader( new InputStreamReader( canal.getInputStream( ) ) ));
 		setSocket(canal);
@@ -73,6 +105,7 @@ public class Conexion extends Thread
 		this.servidor = pServidor;
 		this.nomArchivos = nomArchivos;
 		socket.setSoTimeout(TIMEOUT);
+		estadoExito = false;
 	}
 
 	/**
@@ -88,6 +121,9 @@ public class Conexion extends Thread
 			in.close();
 			out.close();
 			socket.close();
+			tiempoFin = System.currentTimeMillis();
+			long tiempoDeTransferencia = tiempoFin - tiempoInicio;
+//			EscritorDeLog escritor = new EscritorDeLog(id, timestamp, nomArchivos, tamanioArchivo, cliente, estadoExito, tiempoDeTransferencia, numeroDePaquetesEnviados, numeroDePaquetesRecibidos, numeroDePaquetesTransmitidos, bytesRecibidos, bytesTransmitidos);
 		}
 		catch (IOException e)
 		{		
@@ -140,6 +176,7 @@ public class Conexion extends Thread
 					}
 					else if(metodoSolicitado.equals(SALIR))
 					{
+						estadoExito = true;
 						cerrarSesion("Sesión cerrada por usuario");
 					}
 				}
@@ -212,7 +249,7 @@ public class Conexion extends Thread
 		{
 			//enviar systemcurrectmilisw
 			out.println(System.currentTimeMillis());
-			
+			tamanioArchivo = (int)myFile.length();
 			//Enviar el archivo
 			byte [] mybytearray  = new byte [(int)myFile.length()];
 			FileInputStream fis = new FileInputStream(myFile);
@@ -220,10 +257,9 @@ public class Conexion extends Thread
 			bis.read(mybytearray,0,mybytearray.length);
 			OutputStream os = socket.getOutputStream();
 			os.write(mybytearray,0,mybytearray.length);
-
+			
 			//Enviar hash del archivo
 			out.println(hash);
-
 			//eperar un ok o error
 			
 			//Cerrar buffer, output y input que fueron usados para enviar el file

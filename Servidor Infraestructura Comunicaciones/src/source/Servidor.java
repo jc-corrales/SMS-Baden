@@ -20,6 +20,7 @@ import java.io.*;
 
 public class Servidor
 {
+	public final static String DESTINOLOGS = "";
 	/**
 	 * Número de Puerto de entrada.
 	 */
