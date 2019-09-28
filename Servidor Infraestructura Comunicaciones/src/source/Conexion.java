@@ -303,11 +303,6 @@ public class Conexion extends Thread
 			//Enviar hash del archivo
 			out.println(hash);
 			//eperar un ok o error
-
-			//Cerrar buffer, output y input que fueron usados para enviar el file
-			os.flush();
-			bis.close();
-			os.close();
 		}
 		catch (IOException e) 
 		{

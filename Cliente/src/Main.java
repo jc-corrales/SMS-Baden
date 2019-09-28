@@ -130,9 +130,6 @@ public class Main {
 
 	      bos.write(mybytearray, 0 , current);
 	      bos.flush();
-	      
-	      fos.close();
-	      //bos.close();
 	}
 
 	public void inicioMultiple(String archivo, String numeroClientes) throws IOException 
