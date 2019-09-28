@@ -5,7 +5,7 @@ public class Main {
 
 	public final static String IP = "157.253.218.40";
 	public final static String DESCARGA = "DESCARGA";
-	public final static String MULTIPLE = "DESCARGA";
+	public final static String MULTIPLE = "MULTIPLE";
 	public final static String HOLA = "HOLA";
 	public final static int PUERTO = 11000;
 	private Socket canal;
