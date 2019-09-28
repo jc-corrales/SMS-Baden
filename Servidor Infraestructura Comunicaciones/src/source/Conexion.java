@@ -145,7 +145,7 @@ public class Conexion extends Thread
 		{
 			//Tiempo de timeout igual a 2 minutos
 			//System.out.println(in.readLine());
-			out.println("HOLA"+id);
+			out.println("HOLA:"+id);
 			StringBuilder estado = new StringBuilder();
 			if(servidor.darMultiple())
 			{

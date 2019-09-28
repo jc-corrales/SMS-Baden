@@ -3,7 +3,8 @@ import java.net.*;
 
 public class Main {
 
-	public final static String IP = "157.253.218.40";
+//	public final static String IP = "157.253.218.40";
+	public final static String IP = "localhost";
 	public final static String DESCARGA = "DESCARGA";
 	public final static String MULTIPLE = "MULTIPLE";
 	public final static String HOLA = "HOLA";
