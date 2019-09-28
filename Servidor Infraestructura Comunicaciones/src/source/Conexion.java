@@ -74,13 +74,9 @@ public class Conexion extends Thread
 	 */
 	private double tamanioArchivo;
 	/**
-	 * Atributo que cuenta el número de bytes recibidos.
-	 */	
-	private long bytesRecibidos;
-	/**
-	 * Atributo que cuenta el número de bytes transmitidos.
+	 * Dirección IP del Cliente.
 	 */
-	private long bytesTransmitidos;
+	private String cliente;
 
 	// -----------------------------------------------------------------
 	// Constructor
@@ -107,6 +103,7 @@ public class Conexion extends Thread
 		this.nomArchivos = nomArchivos;
 		socket.setSoTimeout(TIMEOUT);
 		estadoExito = false;
+		cliente = socket.getRemoteSocketAddress().toString();
 	}
 
 	/**
@@ -124,7 +121,13 @@ public class Conexion extends Thread
 			socket.close();
 			tiempoFin = System.currentTimeMillis();
 			long tiempoDeTransferencia = tiempoFin - tiempoInicio;
-			//			EscritorDeLog escritor = new EscritorDeLog(id, timestamp, nomArchivos, tamanioArchivo, cliente, estadoExito, tiempoDeTransferencia, numeroDePaquetesEnviados, numeroDePaquetesRecibidos, numeroDePaquetesTransmitidos, bytesRecibidos, bytesTransmitidos);
+			long bytesRecibidos = (long) tamanioArchivo;
+			long bytesTransmitidos = (long) tamanioArchivo;
+			long numeroDePaquetesEnviados = 1;
+			long numeroDePaquetesRecibidos = 1;
+			long numeroDePaquetesTransmitidos = 1;
+			EscritorDeLog escritor = new EscritorDeLog(id, timestamp, nomArchivos, tamanioArchivo, cliente, estadoExito, tiempoDeTransferencia, numeroDePaquetesEnviados, numeroDePaquetesRecibidos, numeroDePaquetesTransmitidos, bytesRecibidos, bytesTransmitidos);
+			escritor.imprimirLog();
 		}
 		catch (IOException e)
 		{		
@@ -265,7 +268,7 @@ public class Conexion extends Thread
 			//Se inicia timer
 			long start = System.currentTimeMillis();
 
-			tamanioArchivo = (int)myFile.length();
+			tamanioArchivo = (int) myFile.length();
 
 			//Enviar el archivo
 			byte [] mybytearray  = new byte [(int)myFile.length()];

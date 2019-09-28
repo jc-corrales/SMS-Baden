@@ -107,7 +107,7 @@ public class EscritorDeLog
 			"Número de bytes transmitidos: " + bytesTransmitidos;
 			try
 			{
-				FileWriter writer = new FileWriter(Servidor.DESTINOLOGS);
+				FileWriter writer = new FileWriter(Servidor.PATH_LOGS);
 				BufferedWriter bw = new BufferedWriter(writer);
 				bw.write(informacion);
 				bw.close();
