@@ -33,12 +33,12 @@ public class Main {
 			canal = new Socket( IP, PUERTO);
 
 			inCliente = new BufferedReader( new InputStreamReader( canal.getInputStream( ) ) );
-			outCliente = new PrintWriter( canal.getOutputStream( ) );
+			outCliente = new PrintWriter( canal.getOutputStream( ), true );
 		}
 		catch (IOException e) {
 			abortarConexion();
 		} 
-		outCliente.print(HOLA);
+		outCliente.println(HOLA);
 		String linea = inCliente.readLine();
 		if(linea.startsWith(HOLA))
 		{
@@ -81,32 +81,63 @@ public class Main {
 		
 		if(file.hashCode()== Integer.parseInt(linea))
 		{
-			outCliente.write("OK");
+			outCliente.println("OK");
 		}
 	}
 
 	public void inicioSimple(String archivo) throws IOException 
 	{
 
-		outCliente.write(DESCARGA + ":" +  archivo);
-		//Como sea que se lee el archivo.
-		String linea = inCliente.readLine();
+		outCliente.println(DESCARGA + ":" +  archivo);
+		
+		//tamanio file, se necesita que sea mas grande entonces le sumo 100 bytes
+		int tamanioFile = (int)Double.parseDouble(inCliente.readLine()) + 100;
+		
+		//descargar arch
+		obtenerArchivo(archivo, tamanioFile);
+	
 		//No hacer nada con eso por ahora
 		tiempo = System.currentTimeMillis();
-		linea = inCliente.readLine();
+		
+		//Recibir tiempo
+		String linea = inCliente.readLine();
 		tiempo = tiempo - Long.parseLong(linea);
+		
+		//Recibir hash
 		linea = inCliente.readLine();
 		
 		if(file.hashCode()== Integer.parseInt(linea))
 		{
-			outCliente.write("OK");
+			outCliente.println("OK");
 		}
-		
+		System.out.println(linea);
 	} 
+
+	private void obtenerArchivo(String archivo, int tamanioFile) throws IOException 
+	{
+		 byte [] mybytearray  = new byte [tamanioFile];
+	      InputStream is = canal.getInputStream();
+	      FileOutputStream fos = new FileOutputStream("./data/"+archivo);
+	      BufferedOutputStream bos = new BufferedOutputStream(fos);
+	      int bytesRead = is.read(mybytearray,0,mybytearray.length);
+	      int current = bytesRead;
+
+	      do {
+	         bytesRead =
+	            is.read(mybytearray, current, (mybytearray.length-current));
+	         if(bytesRead >= 0) current += bytesRead;
+	      } while(bytesRead > -1);
+
+	      bos.write(mybytearray, 0 , current);
+	      bos.flush();
+	      
+	      fos.close();
+	      //bos.close();
+	}
 
 	public void inicioMultiple(String archivo, String numeroClientes) throws IOException 
 	{
-		outCliente.write(MULTIPLE +  ":" +  numeroClientes + ":" +  archivo);
+		outCliente.println(MULTIPLE +  ":" +  numeroClientes + ":" +  archivo);
 		//Como sea que se lee el archivo.
 		String linea = inCliente.readLine();
 		//No hacer nada con eso por ahora
@@ -114,10 +145,10 @@ public class Main {
 		linea = inCliente.readLine();
 		tiempo = tiempo - Long.parseLong(linea);
 		linea = inCliente.readLine();
-		
+		System.out.println(linea);
 		if(file.hashCode()== Integer.parseInt(linea))
 		{
-			outCliente.write("OK");
+			outCliente.println("OK");
 		}
 
 	}

@@ -18,8 +18,8 @@ import java.sql.Timestamp;
  */
 public class Conexion extends Thread
 {
-	private final static int TIMEOUT = 12000;
-	private final static String DESCARGA= "DESCARGAR";
+	private final static int TIMEOUT = 120000;
+	private final static String DESCARGA= "DESCARGA";
 	private final static String MULTIPLE= "MULTIPLE";
 	private final static String SALIR= "SALIR";
 
@@ -27,6 +27,11 @@ public class Conexion extends Thread
 	 * Atributo que contiene el socket de la conexión.
 	 */
 	private Socket socket; 
+	
+	/**
+	 * modela si ya se envio el nombre de arch
+	 */
+	private boolean enviadoNomArch;
 
 	/**
 	 * Atributo que representa el flujo de escritura para el usuario.
@@ -90,6 +95,7 @@ public class Conexion extends Thread
 	 */
 	public Conexion (Socket canal, int pId, Servidor pServidor, String nomArchivos) throws IOException
 	{
+		enviadoNomArch = false;
 		tamanioArchivo = 0;
 		Long puntoDeInicio = System.currentTimeMillis();
 		timestamp = new Timestamp(puntoDeInicio);
@@ -162,14 +168,19 @@ public class Conexion extends Thread
 				if(!servidor.darMultiple())
 				{
 					String archivos = "ARCHIVOS:"+nomArchivos;
-					out.println(archivos);
-					System.out.println(archivos);
+					if (!enviadoNomArch) 
+					{
+						out.println(archivos);
+						enviadoNomArch = true;
+					}
 
 					//Se inicia timer
 					long start = System.currentTimeMillis();
 
 					//Se recibe la solicitud de un metodo
 					String metodoSolicitado = in.readLine();
+					
+					System.out.println(metodoSolicitado);
 
 					//Se para el timer
 					long end = System.currentTimeMillis();
@@ -264,12 +275,15 @@ public class Conexion extends Thread
 		String hash = servidor.getHashes().get(linkFike);
 
 		try
-		{
+		{		
+			tamanioArchivo = (int) myFile.length();
+			
+			//enviar length del archivo en bytes
+			out.println(tamanioArchivo);
+
 			//Se inicia timer
 			long start = System.currentTimeMillis();
-
-			tamanioArchivo = (int) myFile.length();
-
+			
 			//Enviar el archivo
 			byte [] mybytearray  = new byte [(int)myFile.length()];
 			FileInputStream fis = new FileInputStream(myFile);
@@ -281,9 +295,9 @@ public class Conexion extends Thread
 			//Se para el timer
 			long end = System.currentTimeMillis();
 
-			//Se calcula el tiempo iddle del usuario
+			//Se calcula el tiempo
 			long duration = (end - start);
-
+			System.out.println(duration);
 			out.println(duration);
 
 			//Enviar hash del archivo
