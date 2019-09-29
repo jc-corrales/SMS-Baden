@@ -1,9 +1,11 @@
 import java.io.*;
 import java.net.*;
+import java.sql.Timestamp;
+
 
 public class Main {
 
-//	public final static String IP = "157.253.218.40";
+	//	public final static String IP = "157.253.218.40";
 	public final static String IP = "localhost";
 	public final static String DESCARGA = "DESCARGA";
 	public final static String MULTIPLE = "MULTIPLE";
@@ -18,6 +20,7 @@ public class Main {
 	public boolean multiple;
 	public long tiempo;
 	public File file;
+	public int paquetesRecibidos;
 
 	public Main()
 	{
@@ -63,90 +66,130 @@ public class Main {
 				}
 			}
 		}
-
-
-
-
 	}
 
 	public void seguimientoMultiple() throws IOException {
-		// TODO Auto-generated method stub
-		//Como sea que se lee el archivo.
-		String linea = inCliente.readLine();
-		//No hacer nada con eso por ahora
-		tiempo = System.currentTimeMillis();
-		linea = inCliente.readLine();
-		tiempo = tiempo - Long.parseLong(linea);
-		linea = inCliente.readLine();
+		boolean estadoExito = false;
+
+		//Recibir nombrearch
+		String archivo = inCliente.readLine();
 		
-		if(file.hashCode()== Integer.parseInt(linea))
+		//Recibir tam
+		String tamnioFile = inCliente.readLine();
+
+		//Recibir hash
+		String hash = inCliente.readLine();
+
+		//No hacer nada con eso por ahora
+		long inic = System.currentTimeMillis();
+
+		//descargar arch
+		obtenerArchivo(archivo);
+
+		//No hacer nada con eso por ahora
+		tiempo = System.currentTimeMillis() - inic;
+
+		if(file.hashCode()== Integer.parseInt(hash))
 		{
-			outCliente.println("OK");
+			estadoExito = true;
 		}
+
+		//Log
+		Long puntoDeInicio = System.currentTimeMillis();
+		Timestamp timestamp = new Timestamp(puntoDeInicio);
+		InetAddress inetAddress = InetAddress.getLocalHost();
+		EscritorDeLog escritor = new EscritorDeLog(numero, timestamp, archivo, Double.parseDouble(tamnioFile), inetAddress.getHostAddress(), estadoExito, tiempo,paquetesRecibidos, file.length());
+		escritor.imprimirLog();
 	}
 
 	public void inicioSimple(String archivo) throws IOException 
 	{
+		boolean estadoExito = false;
 
 		outCliente.println(DESCARGA + ":" +  archivo);
-		
-		//tamanio file, se necesita que sea mas grande entonces le sumo 100 bytes
-		int tamanioFile = (int)Double.parseDouble(inCliente.readLine()) + 100;
-		
-		//descargar arch
-		obtenerArchivo(archivo, tamanioFile);
-	
-		//No hacer nada con eso por ahora
-		tiempo = System.currentTimeMillis();
-		
-		//Recibir tiempo
-		String linea = inCliente.readLine();
-		tiempo = tiempo - Long.parseLong(linea);
-		
+
+		//Recibir tam
+		String tamnioFile = inCliente.readLine();
+
 		//Recibir hash
-		linea = inCliente.readLine();
-		
-		if(file.hashCode()== Integer.parseInt(linea))
+		String hash = inCliente.readLine();
+
+		//No hacer nada con eso por ahora
+		long inic = System.currentTimeMillis();
+
+		//descargar arch
+		obtenerArchivo(archivo);
+
+		//No hacer nada con eso por ahora
+		tiempo = System.currentTimeMillis() - inic;
+
+		if(file.hashCode()== Integer.parseInt(hash))
 		{
-			outCliente.println("OK");
+			estadoExito = true;
 		}
-		System.out.println(linea);
+
+		//Log
+		Long puntoDeInicio = System.currentTimeMillis();
+		Timestamp timestamp = new Timestamp(puntoDeInicio);
+		InetAddress inetAddress = InetAddress.getLocalHost();
+		EscritorDeLog escritor = new EscritorDeLog(numero, timestamp, archivo, Double.parseDouble(tamnioFile), inetAddress.getHostAddress(), estadoExito, tiempo,paquetesRecibidos, file.length());
+		escritor.imprimirLog();
+
 	} 
 
-	private void obtenerArchivo(String archivo, int tamanioFile) throws IOException 
+	private void obtenerArchivo(String archivo) throws IOException 
 	{
-		 byte [] mybytearray  = new byte [tamanioFile];
-	      InputStream is = canal.getInputStream();
-	      FileOutputStream fos = new FileOutputStream("./data/"+archivo);
-	      BufferedOutputStream bos = new BufferedOutputStream(fos);
-	      int bytesRead = is.read(mybytearray,0,mybytearray.length);
-	      int current = bytesRead;
-
-	      do {
-	         bytesRead =
-	            is.read(mybytearray, current, (mybytearray.length-current));
-	         if(bytesRead >= 0) current += bytesRead;
-	      } while(bytesRead > -1);
-
-	      bos.write(mybytearray, 0 , current);
-	      bos.flush();
+		int c = 0;
+		FileOutputStream fos = new FileOutputStream("./data/"+archivo);
+		BufferedOutputStream out = new BufferedOutputStream(fos);
+		byte[] buffer = new byte[1024];
+		int count;
+		InputStream in = canal.getInputStream();
+		while ((count = in.read(buffer)) >= 0)
+		{
+			fos.write(buffer, 0, count);
+			c++;
+		}
+		paquetesRecibidos = c;
+		out.close();
+		file = new File("./data/"+archivo);
 	}
 
 	public void inicioMultiple(String archivo, String numeroClientes) throws IOException 
 	{
+		boolean estadoExito = true;
 		outCliente.println(MULTIPLE +  ":" +  numeroClientes + ":" +  archivo);
-		//Como sea que se lee el archivo.
-		String linea = inCliente.readLine();
+
+		//Recibir nombrearch
+		inCliente.readLine();
+				
+		//Recibir tam
+		String tamnioFile = inCliente.readLine();
+
+		//Recibir hash
+		String hash = inCliente.readLine();
+
 		//No hacer nada con eso por ahora
-		tiempo = System.currentTimeMillis();
-		linea = inCliente.readLine();
-		tiempo = tiempo - Long.parseLong(linea);
-		linea = inCliente.readLine();
-		System.out.println(linea);
-		if(file.hashCode()== Integer.parseInt(linea))
+		long inic = System.currentTimeMillis();
+
+		//descargar arch
+		obtenerArchivo(archivo);
+
+		//No hacer nada con eso por ahora
+		tiempo = System.currentTimeMillis() - inic;
+
+		if(file.hashCode()== Integer.parseInt(hash))
 		{
-			outCliente.println("OK");
+			estadoExito = true;
 		}
+
+		//Log
+		Long puntoDeInicio = System.currentTimeMillis();
+		Timestamp timestamp = new Timestamp(puntoDeInicio);
+		InetAddress inetAddress = InetAddress.getLocalHost();
+		EscritorDeLog escritor = new EscritorDeLog(numero, timestamp, archivo, Double.parseDouble(tamnioFile), inetAddress.getHostAddress(), estadoExito, tiempo,paquetesRecibidos, file.length());
+		escritor.imprimirLog();
+
 
 	}
 

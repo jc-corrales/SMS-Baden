@@ -1,4 +1,4 @@
-package source;
+
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -31,30 +31,13 @@ public class EscritorDeLog
 	 * Booleano que indica si el envío fue exitoso o no.
 	 */
 	private Boolean estadoExito;
-	/**
-	 * Tiempo de transferencia del archivo.
-	 */
-	private Double tiempoDeTransferencia;
-	/**
-	 * Número de paquetes enviados.
-	 */
-	private long numeroDePaquetesEnviados;
-	/**
-	 * Número de paquetes recibidos.
-	 */
-	private Long numeroDePaquetesRecibidos;
-	/**
-	 * Número de paquetes transmitidos.
-	 */
-	private Long numeroDePaquetesTransmitidos;
+
+	private int  paquetesRecibidos;
+	
 	/**
 	 * Número de bytes recibidos.
 	 */
 	private Long bytesRecibidos;
-	/**
-	 * Número de bytes transmitidos.
-	 */
-	private Long bytesTransmitidos;
 	/**
 	 * @return the iD
 	 */
@@ -71,9 +54,8 @@ public class EscritorDeLog
 
 	public EscritorDeLog(long id, Timestamp timestamp, String nombreArchivo, double tamanioArchivo,
 			String cliente, boolean estadoExito, double tiempoDeTransferencia,
-			long numeroDePaquetesEnviados,
-			long numeroDePaquetesRecibidos, long numeroDePaquetesTransmitidos, 
-			long bytesRecibidos, long bytesTransmitidos)
+			int numeroDePaquetesRecibidos,
+			long bytesRecibidos)
 	{
 		this.ID = id;
 		this.timestamp = timestamp;
@@ -81,12 +63,8 @@ public class EscritorDeLog
 		this.tamanioArchivo = tamanioArchivo;
 		this.cliente = cliente;
 		this.estadoExito = estadoExito;
-		this.tiempoDeTransferencia = tiempoDeTransferencia;
-		this.numeroDePaquetesEnviados = numeroDePaquetesEnviados;
-		this.numeroDePaquetesRecibidos = numeroDePaquetesRecibidos;
-		this.numeroDePaquetesTransmitidos = numeroDePaquetesTransmitidos;
 		this.bytesRecibidos = bytesRecibidos;
-		this.bytesTransmitidos = bytesTransmitidos;
+		this.paquetesRecibidos = numeroDePaquetesRecibidos;
 	}
 	
 	public boolean imprimirLog()
@@ -99,16 +77,12 @@ public class EscritorDeLog
 			"Tamaño del Archivo enviado (bytes): " + tamanioArchivo + "\n" +
 			"Cliente: " + cliente + "\n" +
 			"Estado de envío de Entrega: " + estadoExito + "\n" +
-			"Tiempo de Transferencia, en milisegundos: " + tiempoDeTransferencia + "\n" +
-			"Número de paquetes enviados: " + numeroDePaquetesEnviados + "\n" +
-			"Número de paquetes recibidos: " + numeroDePaquetesRecibidos + "\n" +
-			"Número de paquetes transmitidos: " + numeroDePaquetesTransmitidos + "\n" +
-			"Número de bytes recibidos: " + bytesRecibidos + "\n" +
-			"Número de bytes transmitidos: " + bytesTransmitidos;
+			"Número de paquetes recibidos: " + paquetesRecibidos + "\n" +
+			"Número de bytes recibidos: " + bytesRecibidos;
 			try
 			{
 				String time = (timestamp.toString()).replace(":", ".");
-				FileWriter writer = new FileWriter(Servidor.PATH_LOGS+"/"+ID +"."+time);
+				FileWriter writer = new FileWriter("./logs/"+ID +"."+time+".txt");
 				BufferedWriter bw = new BufferedWriter(writer);
 				bw.write(informacion);
 				bw.close();
@@ -179,54 +153,6 @@ public class EscritorDeLog
 	 */
 	public void setEstadoExito(Boolean estadoExito) {
 		this.estadoExito = estadoExito;
-	}
-	/**
-	 * @return the tiempoDeTransferencia
-	 */
-	public Double getTiempoDeTransferencia() {
-		return tiempoDeTransferencia;
-	}
-	/**
-	 * @param tiempoDeTransferencia the tiempoDeTransferencia to set
-	 */
-	public void setTiempoDeTransferencia(Double tiempoDeTransferencia) {
-		this.tiempoDeTransferencia = tiempoDeTransferencia;
-	}
-	/**
-	 * @return the numeroDePaquetesRecibidos
-	 */
-	public Long getNumeroDePaquetesEnviados() {
-		return numeroDePaquetesEnviados;
-	}
-	/**
-	 * @param numeroDePaquetesRecibidos the numeroDePaquetesRecibidos to set
-	 */
-	public void setNumeroDePaquetesEnviados(Long numeroDePaquetesEnviados) {
-		this.numeroDePaquetesEnviados = numeroDePaquetesEnviados;
-	}
-	/**
-	 * @return the numeroDePaquetesRecibidos
-	 */
-	public Long getNumeroDePaquetesRecibidos() {
-		return numeroDePaquetesRecibidos;
-	}
-	/**
-	 * @param numeroDePaquetesRecibidos the numeroDePaquetesRecibidos to set
-	 */
-	public void setNumeroDePaquetesRecibidos(Long numeroDePaquetesRecibidos) {
-		this.numeroDePaquetesRecibidos = numeroDePaquetesRecibidos;
-	}
-	/**
-	 * @return the numeroDePaquetesTransmitidos
-	 */
-	public Long getNumeroDePaquetesTransmitidos() {
-		return numeroDePaquetesTransmitidos;
-	}
-	/**
-	 * @param numeroDePaquetesTransmitidos the numeroDePaquetesTransmitidos to set
-	 */
-	public void setNumeroDePaquetesTransmitidos(Long numeroDePaquetesTransmitidos) {
-		this.numeroDePaquetesTransmitidos = numeroDePaquetesTransmitidos;
 	}
 	/**
 	 * @return the bytesRecibidos

@@ -82,6 +82,9 @@ public class Conexion extends Thread
 	 * Dirección IP del Cliente.
 	 */
 	private String cliente;
+	
+	private long numeroDePaquetesEnviados;
+	private String nomArchivoEnviado;
 
 	// -----------------------------------------------------------------
 	// Constructor
@@ -125,14 +128,12 @@ public class Conexion extends Thread
 			in.close();
 			out.close();
 			socket.close();
-			tiempoFin = System.currentTimeMillis();
 			long tiempoDeTransferencia = tiempoFin - tiempoInicio;
 			long bytesRecibidos = (long) tamanioArchivo;
 			long bytesTransmitidos = (long) tamanioArchivo;
-			long numeroDePaquetesEnviados = 1;
 			long numeroDePaquetesRecibidos = 1;
 			long numeroDePaquetesTransmitidos = 1;
-			EscritorDeLog escritor = new EscritorDeLog(id, timestamp, nomArchivos, tamanioArchivo, cliente, estadoExito, tiempoDeTransferencia, numeroDePaquetesEnviados, numeroDePaquetesRecibidos, numeroDePaquetesTransmitidos, bytesRecibidos, bytesTransmitidos);
+			EscritorDeLog escritor = new EscritorDeLog(id, timestamp, nomArchivoEnviado, tamanioArchivo, cliente, estadoExito, tiempoDeTransferencia, numeroDePaquetesEnviados, numeroDePaquetesRecibidos, numeroDePaquetesTransmitidos, bytesRecibidos, bytesTransmitidos);
 			escritor.imprimirLog();
 		}
 		catch (IOException e)
@@ -150,7 +151,7 @@ public class Conexion extends Thread
 		try
 		{
 			//Tiempo de timeout igual a 2 minutos
-			//System.out.println(in.readLine());
+			in.readLine();
 			out.println("HOLA:"+id);
 			StringBuilder estado = new StringBuilder();
 			if(servidor.darMultiple())
@@ -179,8 +180,6 @@ public class Conexion extends Thread
 
 					//Se recibe la solicitud de un metodo
 					String metodoSolicitado = in.readLine();
-					
-					System.out.println(metodoSolicitado);
 
 					//Se para el timer
 					long end = System.currentTimeMillis();
@@ -211,9 +210,10 @@ public class Conexion extends Thread
 				{
 					if(sePuedeHacerEnvioMultiple())
 					{
+						out.println(servidor.getNombreArchMult().toString());
 						disminuirCLientesFaltantes();
 						enviarImagen(servidor.getNombreArchMult().toString());
-					}	
+					}
 				}
 			}
 		}
@@ -268,41 +268,43 @@ public class Conexion extends Thread
 	/**
 	 * Envia la imagen al usuario
 	 * @param metodoSolicitado
+	 * @throws Exception 
 	 */
-	private void enviarImagen(String linkFike)
+	private void enviarImagen(String linkFike) throws Exception
 	{
+		nomArchivoEnviado = linkFike;
 		File myFile = new File ("./data/"+linkFike);
 		String hash = servidor.getHashes().get(linkFike);
 
 		try
 		{		
-			tamanioArchivo = (int) myFile.length();
-			
 			//enviar length del archivo en bytes
+			tamanioArchivo = (int) myFile.length();
 			out.println(tamanioArchivo);
-
-			//Se inicia timer
-			long start = System.currentTimeMillis();
 			
-			//Enviar el archivo
-			byte [] mybytearray  = new byte [(int)myFile.length()];
-			FileInputStream fis = new FileInputStream(myFile);
-			BufferedInputStream bis = new BufferedInputStream(fis);
-			bis.read(mybytearray,0,mybytearray.length);
-			OutputStream os = socket.getOutputStream();
-			os.write(mybytearray,0,mybytearray.length);
-
-			//Se para el timer
-			long end = System.currentTimeMillis();
-
-			//Se calcula el tiempo
-			long duration = (end - start);
-			System.out.println(duration);
-			out.println(duration);
-
 			//Enviar hash del archivo
 			out.println(hash);
-			//eperar un ok o error
+
+			//Se inicia timer
+			tiempoInicio = System.currentTimeMillis();
+			
+			//Enviar el archivo
+			int count;
+			int enviados = 0;
+			byte[] buffer = new byte[1024];
+			OutputStream outs = socket.getOutputStream();
+			BufferedInputStream ins = new BufferedInputStream(new FileInputStream(myFile));
+			while ((count = ins.read(buffer)) >= 0) 
+			{
+			     outs.write(buffer, 0, count);
+			     enviados++;
+			}
+			tiempoFin = System.currentTimeMillis();
+			numeroDePaquetesEnviados = enviados;
+			ins.close();
+			cerrarSesion("Se descargo el archivo correctamente");
+			estadoExito = true;
+			
 		}
 		catch (IOException e) 
 		{
