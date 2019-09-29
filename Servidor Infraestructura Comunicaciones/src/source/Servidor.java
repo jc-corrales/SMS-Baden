@@ -282,7 +282,7 @@ public class Servidor
 	{
 		int numT = 5;
 		ExecutorService exec = Executors.newFixedThreadPool(numT);
-		System.out.println("Creado pool de tamaño "+ numT);
+		System.out.println("Creado pool de tamanio "+ numT);
 		int idThread = 0;
 		status = true;
 		try
