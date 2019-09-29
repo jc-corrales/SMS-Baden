@@ -75,7 +75,7 @@ public class Conexion extends Thread
 	 */
 	private boolean estadoExito;
 	/**
-	 * Atributo que contiene el tamaño del archivo a enviar.
+	 * Atributo que contiene el tamanio del archivo a enviar.
 	 */
 	private double tamanioArchivo;
 	/**

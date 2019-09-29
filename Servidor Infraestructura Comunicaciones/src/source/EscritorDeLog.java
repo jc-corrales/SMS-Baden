@@ -20,7 +20,7 @@ public class EscritorDeLog
 	 */
 	private String nombreArchivo;
 	/**
-	 * Tamaño del archivo enviado.
+	 * Tamanio del archivo enviado.
 	 */
 	private Double tamanioArchivo;
 	/**
@@ -84,7 +84,7 @@ public class EscritorDeLog
 			String informacion = 
 			"Fecha y Hora de transmision: " + timestamp.getTime() + "\n" +
 			"Nombre del Archivo enviado: " + nombreArchivo + "\n" +
-			"Tamaño del Archivo enviado (bytes): " + tamanioArchivo + "\n" +
+			"Tamanio del Archivo enviado (bytes): " + tamanioArchivo + "\n" +
 			"Cliente: " + cliente + "\n" +
 			"Estado de envio de Entrega: " + estadoExito + "\n" +
 			"Tiempo de Transferencia, en milisegundos: " + tiempoDeTransferencia + "\n" +
