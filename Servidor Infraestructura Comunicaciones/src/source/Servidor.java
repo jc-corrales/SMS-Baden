@@ -38,7 +38,7 @@ public class Servidor
 	/**
 	 * Define path de ubicacion archivos
 	 */
-	public static final String PATH_LOGS = "./logs";
+	
 
 	/**
 	 * Socket de entrada.

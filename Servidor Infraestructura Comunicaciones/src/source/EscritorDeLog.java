@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 
 public class EscritorDeLog
 {
+	public static final String PATH_LOGS = "./logs";
 	/**
 	 * Identificador del Log.
 	 */
@@ -94,7 +95,7 @@ public class EscritorDeLog
 			try
 			{
 				String time = (timestamp.toString()).replace(":", ".");
-				FileWriter writer = new FileWriter(Servidor.PATH_LOGS+"/"+ID +"."+time+".txt");
+				FileWriter writer = new FileWriter(PATH_LOGS+"/"+ID +"."+time+".txt");
 				BufferedWriter bw = new BufferedWriter(writer);
 				bw.write(informacion);
 				bw.close();
