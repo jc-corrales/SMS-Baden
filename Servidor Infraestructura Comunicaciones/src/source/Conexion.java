@@ -129,11 +129,9 @@ public class Conexion extends Thread
 			out.close();
 			socket.close();
 			long tiempoDeTransferencia = tiempoFin - tiempoInicio;
-			long bytesRecibidos = (long) tamanioArchivo;
+			long numeroDePaquetesTransmitidos = numeroDePaquetesEnviados;
 			long bytesTransmitidos = (long) tamanioArchivo;
-			long numeroDePaquetesRecibidos = 1;
-			long numeroDePaquetesTransmitidos = 1;
-			EscritorDeLog escritor = new EscritorDeLog(id, timestamp, nomArchivoEnviado, tamanioArchivo, cliente, estadoExito, tiempoDeTransferencia, numeroDePaquetesEnviados, numeroDePaquetesRecibidos, numeroDePaquetesTransmitidos, bytesRecibidos, bytesTransmitidos);
+			EscritorDeLog escritor = new EscritorDeLog(id, timestamp, nomArchivoEnviado, tamanioArchivo, cliente, estadoExito, tiempoDeTransferencia, numeroDePaquetesEnviados, numeroDePaquetesTransmitidos, bytesTransmitidos);
 			escritor.imprimirLog();
 		}
 		catch (IOException e)
