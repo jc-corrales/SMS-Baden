@@ -21,7 +21,7 @@ import java.io.*;
 public class Servidor
 {
 	/**
-	 * Número de Puerto de entrada.
+	 * Numero de Puerto de entrada.
 	 */
 	public static final int PUERTO = 11000;
 
@@ -46,7 +46,7 @@ public class Servidor
 	private static ServerSocket puntoDeEntrada;
 
 	/**
-	 * Es el conjunto de propiedades que contienen la configuración de la aplicación
+	 * Es el conjunto de propiedades que contienen la configuracion de la aplicacion
 	 */
 	private Properties config;
 
@@ -66,7 +66,7 @@ public class Servidor
 	private int numeroClientesEnvioMultiple;
 	
 	/**
-	 * Es una colección con las conexiones que se están llevando a cabo en este momento
+	 * Es una coleccion con las conexiones que se estan llevando a cabo en este momento
 	 */
 	protected Collection <Conexion> conexiones;
 
@@ -81,7 +81,7 @@ public class Servidor
 	private boolean envioMultiple;
 
 	/**
-	 * Modela el nombre del archivo al cuál se debe hacer envió multiple
+	 * Modela el nombre del archivo al cual se debe hacer envio multiple
 	 */
 	private StringBuilder nombreArchMult;
 
@@ -91,13 +91,13 @@ public class Servidor
 	private String nombresArchivosDisponibles;
 	
 	/**
-	 * Atributo que guarda la información de una nueva conexión.
+	 * Atributo que guarda la informacion de una nueva conexion.
 	 */
 	private Conexion nuevaConexion;
 	/**
 	 * Inicializa el servidor.
-	 * @param archivo El archivo de propiedades que tiene la configuración del servidor - archivo != null
-	 * @throws Exception Se lanza esta excepción si hay problemas con el archivo de propiedades o hay problemas en la conexión a la base de datos.
+	 * @param archivo El archivo de propiedades que tiene la configuracion del servidor - archivo != null
+	 * @throws Exception Se lanza esta excepcion si hay problemas con el archivo de propiedades o hay problemas en la conexion a la base de datos.
 	 */
 	public Servidor (String archivo) throws Exception
 	{
@@ -141,8 +141,8 @@ public class Servidor
 	}
 	/**
 	 * Intenta crear e iniciar una nueva conexion con el usuaro que se acaba de conectar. <br>
-	 * @param socketNuevoCliente El canal que permite la comunicación con el nuevo usuario - socket != null
-	 * @throws IOException Se lanza esta excepción si se presentan problemas de comunicación
+	 * @param socketNuevoCliente El canal que permite la comunicacion con el nuevo usuario - socket != null
+	 * @throws IOException Se lanza esta excepcion si se presentan problemas de comunicacion
 	 */
 	synchronized private void crearConexion ( Socket socketNuevoCliente ) throws IOException
 	{
@@ -152,10 +152,10 @@ public class Servidor
 	}
 
 	/**
-	 * Carga la configuración a partir de un archivo de propiedades
-	 * @param archivo El archivo de propiedades que contiene la configuración que requiere el servidor - archivo != null y el archivo debe contener la propiedad
+	 * Carga la configuracion a partir de un archivo de propiedades
+	 * @param archivo El archivo de propiedades que contiene la configuracion que requiere el servidor - archivo != null y el archivo debe contener la propiedad
 	 *        "servidor.puerto" y las propiedades que requiere el administrador de usuarios.
-	 * @throws Exception Se lanza esta excepción si hay problemas cargando el archivo de propiedades.
+	 * @throws Exception Se lanza esta excepcion si hay problemas cargando el archivo de propiedades.
 	 */
 	private void cargarConfiguracion( String archivo) throws Exception
 	{
@@ -166,7 +166,7 @@ public class Servidor
 	}
 
 	/**
-	 * Este método se encarga de recibir todas las conexiones entrantes y crear los encuentros cuando fuera necesario.
+	 * Este metodo se encarga de recibir todas las conexiones entrantes y crear los encuentros cuando fuera necesario.
 	 */
 	public void recibirConexiones( )
 	{
@@ -178,7 +178,7 @@ public class Servidor
 
 			while( true )
 			{
-				// Esperar una nueva conexión
+				// Esperar una nueva conexion
 				Socket socketNuevoCliente = puntoDeEntrada.accept( );
 
 				// Intentar iniciar un encuentro con el nuevo cliente
@@ -203,9 +203,9 @@ public class Servidor
 	}
 
 	/**
-	 * Retorna una colección actualizada con las conexiones que se están desarrollando actualmente y no han terminado.<br>
-	 * Si había conexiones en la lista que ya habían terminado deben ser eliminados.
-	 * @return colección de conexiones.
+	 * Retorna una coleccion actualizada con las conexiones que se estan desarrollando actualmente y no han terminado.<br>
+	 * Si habia conexiones en la lista que ya habian terminado deben ser eliminados.
+	 * @return coleccion de conexiones.
 	 */
 	public Collection <Conexion> darListaDeUsuariosConectados()
 	{
@@ -222,8 +222,8 @@ public class Servidor
 		return conexiones;
 	}
 	/**
-	 * Método que termina todas las conexiones y establece el estado de conexión de los usuarios en 0, para evitar problemas debido a un cierre inesperado del servidor.
-	 * @throws Exception Excepción en caso de que se presente algún problema desconectando a los usuarios.
+	 * Metodo que termina todas las conexiones y establece el estado de conexion de los usuarios en 0, para evitar problemas debido a un cierre inesperado del servidor.
+	 * @throws Exception Excepcion en caso de que se presente algun problema desconectando a los usuarios.
 	 */
 	public void desconexionDeSeguridad()throws Exception
 	{
@@ -235,14 +235,14 @@ public class Servidor
 				Conexion e = ( Conexion )iter.next( );
 				if( e.getEstadoSesion() )
 				{
-					e.cerrarSesion("Desconexión");	
+					e.cerrarSesion("Desconexion");	
 				}
 			}
 			conexiones.clear();
 		}
 		catch (Exception e)
 		{
-			throw new Exception ("Error en la desconexión: " + e.getMessage());
+			throw new Exception ("Error en la desconexion: " + e.getMessage());
 		}
 	}
 
@@ -263,7 +263,7 @@ public class Servidor
 	}
 
 	/**
-	 * Genera el hash dado el método y el archivo
+	 * Genera el hash dado el metodo y el archivo
 	 * @param digest
 	 * @param file
 	 * @return
@@ -292,7 +292,7 @@ public class Servidor
 			while(status)
 			{
 				Socket cliente = puntoDeEntrada.accept();
-				System.out.println("Cliente " + idThread + " inició sesión.");
+				System.out.println("Cliente " + idThread + " inicio sesion.");
 				Conexion con = new Conexion(cliente,idThread, servidor, servidor.nombresArchivosDisponibles);
 				exec.execute(con);
 				idThread++;

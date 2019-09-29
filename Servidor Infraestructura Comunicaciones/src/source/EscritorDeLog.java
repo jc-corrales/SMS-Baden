@@ -12,7 +12,7 @@ public class EscritorDeLog
 	 */
 	private Long ID;
 	/**
-	 * Fecha y hora de la conexión.
+	 * Fecha y hora de la conexion.
 	 */
 	private Timestamp timestamp;
 	/**
@@ -28,7 +28,7 @@ public class EscritorDeLog
 	 */
 	private String cliente;
 	/**
-	 * Booleano que indica si el envío fue exitoso o no.
+	 * Booleano que indica si el envio fue exitoso o no.
 	 */
 	private Boolean estadoExito;
 	/**
@@ -36,15 +36,15 @@ public class EscritorDeLog
 	 */
 	private Double tiempoDeTransferencia;
 	/**
-	 * Número de paquetes enviados.
+	 * Numero de paquetes enviados.
 	 */
 	private long numeroDePaquetesEnviados;
 	/**
-	 * Número de paquetes transmitidos.
+	 * Numero de paquetes transmitidos.
 	 */
 	private Long numeroDePaquetesTransmitidos;
 	/**
-	 * Número de bytes transmitidos.
+	 * Numero de bytes transmitidos.
 	 */
 	private Long bytesTransmitidos;
 	/**
@@ -82,15 +82,15 @@ public class EscritorDeLog
 		try
 		{
 			String informacion = 
-			"Fecha y Hora de transmisión: " + timestamp.getTime() + "\n" +
+			"Fecha y Hora de transmision: " + timestamp.getTime() + "\n" +
 			"Nombre del Archivo enviado: " + nombreArchivo + "\n" +
 			"Tamaño del Archivo enviado (bytes): " + tamanioArchivo + "\n" +
 			"Cliente: " + cliente + "\n" +
-			"Estado de envío de Entrega: " + estadoExito + "\n" +
+			"Estado de envio de Entrega: " + estadoExito + "\n" +
 			"Tiempo de Transferencia, en milisegundos: " + tiempoDeTransferencia + "\n" +
-			"Número de paquetes enviados: " + numeroDePaquetesEnviados + "\n" +
-			"Número de paquetes transmitidos: " + numeroDePaquetesTransmitidos + "\n" +
-			"Número de bytes transmitidos: " + bytesTransmitidos;
+			"Numero de paquetes enviados: " + numeroDePaquetesEnviados + "\n" +
+			"Numero de paquetes transmitidos: " + numeroDePaquetesTransmitidos + "\n" +
+			"Numero de bytes transmitidos: " + bytesTransmitidos;
 			try
 			{
 				String time = (timestamp.toString()).replace(":", ".");
@@ -107,7 +107,7 @@ public class EscritorDeLog
 		}
 		catch (Exception e)
 		{
-			System.err.println("Error durante la impresión del Log:" + e.getMessage());
+			System.err.println("Error durante la impresion del Log:" + e.getMessage());
 			return false;
 		}
 	}

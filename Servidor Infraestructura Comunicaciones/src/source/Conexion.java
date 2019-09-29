@@ -12,7 +12,7 @@ import java.net.Socket;
 import java.sql.Timestamp;
 
 /**
- * Modela una conexión entre 1 cliente y el servidor
+ * Modela una conexion entre 1 cliente y el servidor
  * @author ADMIN
  *
  */
@@ -24,7 +24,7 @@ public class Conexion extends Thread
 	private final static String SALIR= "SALIR";
 
 	/**
-	 * Atributo que contiene el socket de la conexión.
+	 * Atributo que contiene el socket de la conexion.
 	 */
 	private Socket socket; 
 	
@@ -44,7 +44,7 @@ public class Conexion extends Thread
 	private BufferedReader in;
 
 	/**
-	 * Atributo que determina el estado de la sesión, true si está conectado, false si está desconectado.
+	 * Atributo que determina el estado de la sesion, true si esta conectado, false si esta desconectado.
 	 */
 	private boolean estadoSesion;
 
@@ -55,11 +55,11 @@ public class Conexion extends Thread
 	 */
 	private Servidor servidor;
 	/**
-	 * Tiempo de inicio de la conexión.
+	 * Tiempo de inicio de la conexion.
 	 */
 	private long tiempoInicio;
 	/**
-	 * Tiempo de finalización de la conexión.
+	 * Tiempo de finalizacion de la conexion.
 	 */
 	private long tiempoFin;
 	/**
@@ -67,11 +67,11 @@ public class Conexion extends Thread
 	 */
 	private Timestamp timestamp;
 	/**
-	 * Modela la id de la conexión
+	 * Modela la id de la conexion
 	 */
 	private int id;
 	/**
-	 * Atributo que contiene si el envío fue exitoso o no.
+	 * Atributo que contiene si el envio fue exitoso o no.
 	 */
 	private boolean estadoExito;
 	/**
@@ -79,7 +79,7 @@ public class Conexion extends Thread
 	 */
 	private double tamanioArchivo;
 	/**
-	 * Dirección IP del Cliente.
+	 * Direccion IP del Cliente.
 	 */
 	private String cliente;
 	
@@ -92,9 +92,9 @@ public class Conexion extends Thread
 
 	/**
 	 * Constructor de la clase. 
-	 * @param canal canal de comunicación con un cliente.
-	 * @param administrador Parámetro de la clase que conecta el programa con la base de datos.
-	 * @throws IOException Excepción que pueda ser generada debido al lector y escritor.
+	 * @param canal canal de comunicacion con un cliente.
+	 * @param administrador Parametro de la clase que conecta el programa con la base de datos.
+	 * @throws IOException Excepcion que pueda ser generada debido al lector y escritor.
 	 */
 	public Conexion (Socket canal, int pId, Servidor pServidor, String nomArchivos) throws IOException
 	{
@@ -116,15 +116,15 @@ public class Conexion extends Thread
 	}
 
 	/**
-	 * Método que cierra la sesión de un usuario.
-	 * @throws Exception Si se presenta algún error al cerrar la sesión.
+	 * Metodo que cierra la sesion de un usuario.
+	 * @throws Exception Si se presenta algun error al cerrar la sesion.
 	 */
 	public void cerrarSesion(String motivo) throws Exception
 	{
 		try
 		{
 			estadoSesion = false;
-			out.println("Sesión terminada: " + motivo);
+			out.println("Sesion terminada: " + motivo);
 			in.close();
 			out.close();
 			socket.close();
@@ -185,10 +185,10 @@ public class Conexion extends Thread
 					//Se calcula el tiempo iddle del usuario
 					long duration = (end - start);
 
-					//Si el tiempo supera el de timeout se cierra la sesión
+					//Si el tiempo supera el de timeout se cierra la sesion
 					if(duration >= TIMEOUT)
 					{
-						cerrarSesion("Se superó el tiempo de sesión sin actividad");
+						cerrarSesion("Se supero el tiempo de sesion sin actividad");
 					}
 					else if(metodoSolicitado.contains(DESCARGA))
 					{
@@ -201,7 +201,7 @@ public class Conexion extends Thread
 					else if(metodoSolicitado.equals(SALIR))
 					{
 						estadoExito = true;
-						cerrarSesion("Sesión cerrada por usuario");
+						cerrarSesion("Sesion cerrada por usuario");
 					}
 				}
 				else
@@ -220,7 +220,7 @@ public class Conexion extends Thread
 			try
 			{
 				estadoSesion = false;
-				cerrarSesion("Fallo al comenzar la sesión");
+				cerrarSesion("Fallo al comenzar la sesion");
 				in.close();
 				out.close();
 				socket.close();
@@ -316,7 +316,7 @@ public class Conexion extends Thread
 	// -----------------------------------------------------------------
 
 	/**
-	 * Método que retorna el escritor de salida de la conexión actual.
+	 * Metodo que retorna el escritor de salida de la conexion actual.
 	 * @return
 	 */
 	public PrintWriter getOut()
@@ -325,7 +325,7 @@ public class Conexion extends Thread
 	}
 
 	/**
-	 * Método que modifica el escritor de salida de la conexión actual.
+	 * Metodo que modifica el escritor de salida de la conexion actual.
 	 * @param out
 	 */
 	public void setOut(PrintWriter out)
@@ -334,7 +334,7 @@ public class Conexion extends Thread
 	}
 
 	/**
-	 * Método que obtiene el lector de entrada de la conexión actual.
+	 * Metodo que obtiene el lector de entrada de la conexion actual.
 	 * @return
 	 */
 	public BufferedReader getIn()
@@ -343,7 +343,7 @@ public class Conexion extends Thread
 	}
 
 	/**
-	 * Método que modifica el lector de entrada de la conexión actual.
+	 * Metodo que modifica el lector de entrada de la conexion actual.
 	 * @param in
 	 */
 	public void setIn(BufferedReader in)
@@ -352,7 +352,7 @@ public class Conexion extends Thread
 	}
 
 	/**
-	 * Método que retorna el estado actual de la sesión.
+	 * Metodo que retorna el estado actual de la sesion.
 	 * @return
 	 */
 	public boolean getEstadoSesion()
@@ -361,7 +361,7 @@ public class Conexion extends Thread
 	}
 
 	/**
-	 * Método que establece el estado actual de la sesión.
+	 * Metodo que establece el estado actual de la sesion.
 	 * @param estadoSesion
 	 */
 	public void setEstadoSesion(boolean estadoSesion)
