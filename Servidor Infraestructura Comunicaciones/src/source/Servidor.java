@@ -129,7 +129,7 @@ public class Servidor
 			for (String nombreArchivo : result)
 			{
 				File file = new File(nombreArchivo);
-				String nomGuardar = nombreArchivo.replace(".\\data\\","");
+				String nomGuardar = nombreArchivo.replace("./data/","");
 				hashes.put(nomGuardar, darHashFile(file));
 			}
 

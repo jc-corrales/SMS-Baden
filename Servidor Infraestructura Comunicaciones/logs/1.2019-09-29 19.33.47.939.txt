@@ -1,0 +1,9 @@
+Fecha y Hora de transmision: 1569803627939
+Nombre del Archivo enviado: null
+Tamanio del Archivo enviado (bytes): 0.0
+Cliente: /127.0.0.1:65055
+Estado de envio de Entrega: false
+Tiempo de Transferencia, en milisegundos: -1.569803627939E12
+Numero de paquetes enviados: 0
+Numero de paquetes transmitidos: 0
+Numero de bytes transmitidos: 0
