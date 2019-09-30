@@ -124,7 +124,7 @@ public class Conexion extends Thread
 		try
 		{
 			estadoSesion = false;
-			out.println("Sesion terminada: " + motivo);
+			//out.println("Sesion terminada: " + motivo);
 			in.close();
 			out.close();
 			socket.close();

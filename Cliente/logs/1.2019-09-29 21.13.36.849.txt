@@ -1,0 +1,7 @@
+Fecha y Hora de transmisión: 1569809616849
+Nombre del Archivo enviado: greg.txt
+Tamaño del Archivo enviado (bytes): 4.0
+Cliente: 169.254.33.106
+Estado de envío de Entrega: false
+Número de paquetes recibidos: 0
+Número de bytes recibidos: 0

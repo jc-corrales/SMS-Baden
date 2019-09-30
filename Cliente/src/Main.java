@@ -111,9 +111,11 @@ public class Main {
 		//Recibir tam
 		String tamnioFile = inCliente.readLine();
 
+		System.out.println(tamnioFile);
 		//Recibir hash
 		String hash = inCliente.readLine();
 
+		System.out.println(hash);
 		//No hacer nada con eso por ahora
 		long inic = System.currentTimeMillis();
 
