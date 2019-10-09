@@ -1,0 +1,7 @@
+Fecha y Hora de transmisión: 1569817951440
+Nombre del Archivo enviado: Berlin-autumn-5k-backgrounds-2560x1440.jpg
+Tamaño del Archivo enviado (bytes): 1550760.0
+Cliente: 169.254.80.164
+Estado de envío de Entrega: false
+Número de paquetes recibidos: 2067
+Número de bytes recibidos: 1542578
