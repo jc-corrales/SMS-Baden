@@ -36,14 +36,19 @@ public class Servidor
 	public static final String PATH_ARCHIVOS = "./data";
 	
 	/**
+	 * Tamanio del buffer de un paquete.
+	 */
+	public static final int TAMANIOBUFFER = 256;
+	
+	/**
 	 * Define path de ubicacion archivos
 	 */
 	
 
 	/**
-	 * Socket de entrada.
+	 * DatagramSocket de entrada.
 	 */
-	private static ServerSocket puntoDeEntrada;
+	private static DatagramSocket puntoDeEntrada;
 
 	/**
 	 * Es el conjunto de propiedades que contienen la configuracion de la aplicacion
@@ -139,68 +144,74 @@ public class Servidor
 			e.printStackTrace();
 		}
 	}
-	/**
-	 * Intenta crear e iniciar una nueva conexion con el usuaro que se acaba de conectar. <br>
-	 * @param socketNuevoCliente El canal que permite la comunicacion con el nuevo usuario - socket != null
-	 * @throws IOException Se lanza esta excepcion si se presentan problemas de comunicacion
-	 */
-	synchronized private void crearConexion ( Socket socketNuevoCliente ) throws IOException
-	{
-		//nuevaConexion = new Conexion(socketNuevoCliente,0);
-		conexiones.add(nuevaConexion);
-		nuevaConexion.start();
-	}
+//	/**
+//	 * Intenta crear e iniciar una nueva conexion con el usuaro que se acaba de conectar. <br>
+//	 * @param socketNuevoCliente El canal que permite la comunicacion con el nuevo usuario - socket != null
+//	 * @throws IOException Se lanza esta excepcion si se presentan problemas de comunicacion
+//	 */
+//	synchronized private void crearConexion ( ServerSocket socketNuevoCliente ) throws IOException
+//	{
+//		//nuevaConexion = new Conexion(socketNuevoCliente,0);
+//		conexiones.add(nuevaConexion);
+//		nuevaConexion.start();
+//	}
+//
+//	/**
+//	 * Carga la configuracion a partir de un archivo de propiedades
+//	 * @param archivo El archivo de propiedades que contiene la configuracion que requiere el servidor - archivo != null y el archivo debe contener la propiedad
+//	 *        "servidor.puerto" y las propiedades que requiere el administrador de usuarios.
+//	 * @throws Exception Se lanza esta excepcion si hay problemas cargando el archivo de propiedades.
+//	 */
+//	private void cargarConfiguracion( String archivo) throws Exception
+//	{
+//		FileInputStream fis = new FileInputStream( archivo );
+//		config = new Properties( );
+//		config.load( fis );
+//		fis.close( );
+//	}
 
-	/**
-	 * Carga la configuracion a partir de un archivo de propiedades
-	 * @param archivo El archivo de propiedades que contiene la configuracion que requiere el servidor - archivo != null y el archivo debe contener la propiedad
-	 *        "servidor.puerto" y las propiedades que requiere el administrador de usuarios.
-	 * @throws Exception Se lanza esta excepcion si hay problemas cargando el archivo de propiedades.
-	 */
-	private void cargarConfiguracion( String archivo) throws Exception
-	{
-		FileInputStream fis = new FileInputStream( archivo );
-		config = new Properties( );
-		config.load( fis );
-		fis.close( );
-	}
-
-	/**
-	 * Este metodo se encarga de recibir todas las conexiones entrantes y crear los encuentros cuando fuera necesario.
-	 */
-	public void recibirConexiones( )
-	{
-		String aux = config.getProperty( "servidor.puerto" );
-		int puerto = Integer.parseInt( aux );
-		try
-		{
-			puntoDeEntrada = new ServerSocket( puerto );
-
-			while( true )
-			{
-				// Esperar una nueva conexion
-				Socket socketNuevoCliente = puntoDeEntrada.accept( );
-
-				// Intentar iniciar un encuentro con el nuevo cliente
-				crearConexion( socketNuevoCliente );
-			}
-		}
-		catch( IOException e )
-		{
-			e.printStackTrace( );
-		}
-		finally
-		{
-			try
-			{
-				puntoDeEntrada.close( );
-			}
-			catch( IOException e )
-			{
-				e.printStackTrace( );
-			}
-		}
-	}
+//	/**
+//	 * Este metodo se encarga de recibir todas las conexiones entrantes y crear los encuentros cuando fuera necesario.
+//	 */
+//	public void recibirConexiones( )
+//	{
+//		String aux = config.getProperty( "servidor.puerto" );
+//		int puerto = Integer.parseInt( aux );
+//		try
+//		{
+//			puntoDeEntrada = new DatagramSocket( puerto );
+//
+//			while( true )
+//			{
+//				byte[] buffer = new byte[TAMANIOBUFFER];
+//				DatagramPacket packet = new DatagramPacket(buffer, TAMANIOBUFFER);
+//				// Esperar una nueva conexion
+//				DatagramSocket socketNuevoCliente = null;
+//				puntoDeEntrada.receive(packet);
+//				InetAddress direccion = packet.getAddress();
+//				int puerto = packet.getPort();
+//				
+//
+//				// Intentar iniciar un encuentro con el nuevo cliente
+//				crearConexion( socketNuevoCliente );
+//			}
+//		}
+//		catch( IOException e )
+//		{
+//			e.printStackTrace( );
+//		}
+//		finally
+//		{
+//			try
+//			{
+//				puntoDeEntrada.close( );
+//			}
+//			catch( IOException e )
+//			{
+//				e.printStackTrace( );
+//			}
+//		}
+//	}
 
 	/**
 	 * Retorna una coleccion actualizada con las conexiones que se estan desarrollando actualmente y no han terminado.<br>
@@ -288,12 +299,14 @@ public class Servidor
 		try
 		{
 			Servidor servidor = new Servidor("");
-			puntoDeEntrada = new ServerSocket(PUERTO);
+			puntoDeEntrada = new DatagramSocket(PUERTO);
 			while(status)
 			{
-				Socket cliente = puntoDeEntrada.accept();
+				byte[] buffer = new byte[TAMANIOBUFFER];
+				DatagramPacket packet = new DatagramPacket(buffer, TAMANIOBUFFER);
+				puntoDeEntrada.receive(packet);
 				System.out.println("Cliente " + idThread + " inicio sesion.");
-				Conexion con = new Conexion(cliente,idThread, servidor, servidor.nombresArchivosDisponibles);
+				Conexion con = new Conexion(packet, idThread, servidor, servidor.nombresArchivosDisponibles);
 				exec.execute(con);
 				idThread++;
 				servidor.conexiones.add(con);

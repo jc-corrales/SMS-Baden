@@ -8,8 +8,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 
 /**
  * Modela una conexion entre 1 cliente y el servidor
@@ -26,22 +30,30 @@ public class Conexion extends Thread
 	/**
 	 * Atributo que contiene el socket de la conexion.
 	 */
-	private Socket socket; 
+	private DatagramSocket socket; 
+	
+	private int puertoDeDestino;
+	
+	private InetAddress direccionDestino;
+	
+	private String mensaje;
+	
+	private byte[] buffer;
 	
 	/**
 	 * modela si ya se envio el nombre de arch
 	 */
 	private boolean enviadoNomArch;
 
-	/**
-	 * Atributo que representa el flujo de escritura para el usuario.
-	 */
-	private PrintWriter out;
-
-	/**
-	 * Atributo que represente el flujo de lectura del usuario.
-	 */	
-	private BufferedReader in;
+//	/**
+//	 * Atributo que representa el flujo de escritura para el usuario.
+//	 */
+//	private PrintWriter out;
+//
+//	/**
+//	 * Atributo que represente el flujo de lectura del usuario.
+//	 */	
+//	private BufferedReader in;
 
 	/**
 	 * Atributo que determina el estado de la sesion, true si esta conectado, false si esta desconectado.
@@ -96,16 +108,20 @@ public class Conexion extends Thread
 	 * @param administrador Parametro de la clase que conecta el programa con la base de datos.
 	 * @throws IOException Excepcion que pueda ser generada debido al lector y escritor.
 	 */
-	public Conexion (Socket canal, int pId, Servidor pServidor, String nomArchivos) throws IOException
+	public Conexion (DatagramPacket paqueteInicial, int pId, Servidor pServidor, String nomArchivos) throws IOException
 	{
+		socket = new DatagramSocket(Servidor.PUERTO);
+		puertoDeDestino = paqueteInicial.getPort();
+		direccionDestino = paqueteInicial.getAddress();
+		mensaje =  new String(paqueteInicial.getData(), 0 , paqueteInicial.getLength());
+		buffer = new byte[Servidor.TAMANIOBUFFER];
 		enviadoNomArch = false;
 		tamanioArchivo = 0;
 		Long puntoDeInicio = System.currentTimeMillis();
 		timestamp = new Timestamp(puntoDeInicio);
 		tiempoInicio = puntoDeInicio;
-		setOut(new PrintWriter( canal.getOutputStream( ), true ));
-		setIn(new BufferedReader( new InputStreamReader( canal.getInputStream( ) ) ));
-		setSocket(canal);
+
+//		setSocket(canal);
 		setEstadoSesion(true);
 		this.id = pId;
 		this.servidor = pServidor;
@@ -125,8 +141,8 @@ public class Conexion extends Thread
 		{
 			estadoSesion = false;
 			//out.println("Sesion terminada: " + motivo);
-			in.close();
-			out.close();
+//			in.close();
+//			out.close();
 			socket.close();
 			long tiempoDeTransferencia = tiempoFin - tiempoInicio;
 			long numeroDePaquetesTransmitidos = numeroDePaquetesEnviados;
@@ -134,7 +150,7 @@ public class Conexion extends Thread
 			EscritorDeLog escritor = new EscritorDeLog(id, timestamp, nomArchivoEnviado, tamanioArchivo, cliente, estadoExito, tiempoDeTransferencia, numeroDePaquetesEnviados, numeroDePaquetesTransmitidos, bytesTransmitidos);
 			escritor.imprimirLog();
 		}
-		catch (IOException e)
+		catch (Exception e)
 		{		
 			throw new Exception("Error en cierre de sesion:" + e.getMessage());
 		}
@@ -150,7 +166,8 @@ public class Conexion extends Thread
 		{
 			//Tiempo de timeout igual a 2 minutos
 			in.readLine();
-			out.println("HOLA:"+id);
+//			out.println("HOLA:"+id);
+			enviarInformacion("HOLA:"+id);
 			StringBuilder estado = new StringBuilder();
 			if(servidor.darMultiple())
 			{
@@ -160,7 +177,8 @@ public class Conexion extends Thread
 			{
 				estado.append("SIMPLE");
 			}
-			out.println("ESTADO:"+estado.toString());
+//			out.println("ESTADO:"+estado.toString());
+			enviarInformacion("ESTADO:"+estado.toString());
 
 			while(estadoSesion)
 			{	
@@ -169,7 +187,9 @@ public class Conexion extends Thread
 					String archivos = "ARCHIVOS:"+nomArchivos;
 					if (!enviadoNomArch) 
 					{
-						out.println(archivos);
+						
+//						out.println(archivos);
+						enviarInformacion(archivos);
 						enviadoNomArch = true;
 					}
 
@@ -208,7 +228,8 @@ public class Conexion extends Thread
 				{
 					if(sePuedeHacerEnvioMultiple())
 					{
-						out.println(servidor.getNombreArchMult().toString());
+//						out.println(servidor.getNombreArchMult().toString());
+						enviarInformacion(servidor.getNombreArchMult().toString());
 						disminuirCLientesFaltantes();
 						enviarImagen(servidor.getNombreArchMult().toString());
 					}
@@ -221,8 +242,8 @@ public class Conexion extends Thread
 			{
 				estadoSesion = false;
 				cerrarSesion("Fallo al comenzar la sesion");
-				in.close();
-				out.close();
+//				in.close();
+//				out.close();
 				socket.close();
 			}
 			catch (Exception e2)
@@ -278,10 +299,11 @@ public class Conexion extends Thread
 		{		
 			//enviar length del archivo en bytes
 			tamanioArchivo = (int) myFile.length();
-			out.println(tamanioArchivo);
-			
+//			out.println(tamanioArchivo);
+			enviarInformacion(tamanioArchivo + "");
 			//Enviar hash del archivo
-			out.println(hash);
+//			out.println(hash);
+			enviarInformacion(hash);
 
 			//Se inicia timer
 			tiempoInicio = System.currentTimeMillis();
@@ -309,47 +331,82 @@ public class Conexion extends Thread
 
 		}
 	}
+	
+	/**
+	 * Método que parte una cadena en arreglos de Bytes y luego los envía.
+	 * @param informacion
+	 * @throws IOException
+	 */
+	private void enviarInformacion(String informacion) throws IOException
+	{
+		buffer = informacion.getBytes();
+		
+		if(buffer.length > Servidor.TAMANIOBUFFER)
+		{
+			int numSubBuffers = (int) Math.ceil(buffer.length/Servidor.TAMANIOBUFFER);
+			ArrayList<byte[]> listaDeBuffers = new ArrayList<byte[]>();
+			for(int i = 0; i < numSubBuffers; i++)
+			{
+				byte[] temp = listaDeBuffers.get(i);
+				temp = new byte[Servidor.TAMANIOBUFFER];
+				listaDeBuffers.set(i, temp);
+
+				for(int j = 0; j < Servidor.TAMANIOBUFFER; j++)
+				{
+					int contadorPosicion = j + (i*Servidor.TAMANIOBUFFER);
+					listaDeBuffers.get(i)[j] = buffer[contadorPosicion];
+				}
+				DatagramPacket paquete = new DatagramPacket(listaDeBuffers.get(i), listaDeBuffers.get(i).length, direccionDestino, puertoDeDestino);
+				socket.send(paquete);
+			}
+		}
+		else
+		{
+			DatagramPacket paquete = new DatagramPacket(buffer, buffer.length, direccionDestino, puertoDeDestino);
+			socket.send(paquete);
+		}
+	}
 
 
 	// -----------------------------------------------------------------
 	// Getters and setters
 	// -----------------------------------------------------------------
 
-	/**
-	 * Metodo que retorna el escritor de salida de la conexion actual.
-	 * @return
-	 */
-	public PrintWriter getOut()
-	{
-		return out;
-	}
-
-	/**
-	 * Metodo que modifica el escritor de salida de la conexion actual.
-	 * @param out
-	 */
-	public void setOut(PrintWriter out)
-	{
-		this.out = out;
-	}
-
-	/**
-	 * Metodo que obtiene el lector de entrada de la conexion actual.
-	 * @return
-	 */
-	public BufferedReader getIn()
-	{
-		return in;
-	}
-
-	/**
-	 * Metodo que modifica el lector de entrada de la conexion actual.
-	 * @param in
-	 */
-	public void setIn(BufferedReader in)
-	{
-		this.in = in;
-	}
+//	/**
+//	 * Metodo que retorna el escritor de salida de la conexion actual.
+//	 * @return
+//	 */
+//	public PrintWriter getOut()
+//	{
+//		return out;
+//	}
+//
+//	/**
+//	 * Metodo que modifica el escritor de salida de la conexion actual.
+//	 * @param out
+//	 */
+//	public void setOut(PrintWriter out)
+//	{
+//		this.out = out;
+//	}
+//
+//	/**
+//	 * Metodo que obtiene el lector de entrada de la conexion actual.
+//	 * @return
+//	 */
+//	public BufferedReader getIn()
+//	{
+//		return in;
+//	}
+//
+//	/**
+//	 * Metodo que modifica el lector de entrada de la conexion actual.
+//	 * @param in
+//	 */
+//	public void setIn(BufferedReader in)
+//	{
+//		this.in = in;
+//	}
 
 	/**
 	 * Metodo que retorna el estado actual de la sesion.
@@ -373,7 +430,7 @@ public class Conexion extends Thread
 	 * Retorna el socket
 	 * @return
 	 */
-	public Socket getSocket()
+	public DatagramSocket getSocket()
 	{
 		return socket;
 	}
@@ -382,7 +439,7 @@ public class Conexion extends Thread
 	 * Cambia el socket
 	 * @param socket
 	 */
-	public void setSocket(Socket socket)
+	public void setSocket(DatagramSocket socket)
 	{
 		this.socket = socket;
 	}
