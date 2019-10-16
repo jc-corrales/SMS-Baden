@@ -11,27 +11,54 @@ public class Cliente
 	public final static int TIMEOUT = 20000;
 	private DatagramSocket socketEntrada;
 	private DatagramSocket socketSalida;
-	private int puerto = 4444;
+	private int puerto;
     private InetAddress direccionDestino;
-    private int puertoDeDestino = 4445;
+    private int puertoDeDestino;
  
     private byte[] buffer;
+    private boolean firstTime;
  
-    public Cliente() throws IOException{
+    public Cliente(int puerto) throws IOException{
 //        socket = new DatagramSocket(puerto);
+    	this.puerto = puerto;
+    	puertoDeDestino = 4445;
         direccionDestino = InetAddress.getByName("localhost");
+        firstTime = true;
     }
  
     public String sendEcho(String msg) throws IOException{
         buffer = new byte[Servidor.TAMANIOBUFFER];
 //        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, direccionDestino, puertoDeDestino);
 //        socket.send(packet);
-        enviarInformacion(msg);
+        String received = "";
+        if(firstTime)
+        {
+        	
+            enviarInformacion("nu");
+            String respuesta = recibirInformacion();
+            if(respuesta.equals("READ"))
+            {
+            	enviarInformacion(msg);
+            	received = recibirInformacion();
+            }
+            else
+            {
+            	System.err.println("El cliente recibio: " + respuesta);
+            	System.err.println("Respuesta del servidor mal");
+            }
+            firstTime = false;
+        }
+        else
+        {
+        	enviarInformacion(msg);
+        	received = recibirInformacion();
+        }
+//        enviarInformacion(msg);
 //        packet = new DatagramPacket(buf, buf.length);
 //        socket.receive(packet);
 //        String received = new String(
 //          packet.getData(), 0, packet.getLength());
-        String received = recibirInformacion();
+        
         return received;
     }
  
@@ -39,7 +66,7 @@ public class Cliente
     {
     	
     	socketEntrada = new DatagramSocket(puerto);
-    	System.out.println("RECEPCION LADO CLIENTE");
+    	System.out.println("RECEPCION LADO CLIENTE, puerto: " + puerto);
     	ArrayList<DatagramPacket> listaDePaquetes = new ArrayList<DatagramPacket>(); 
 
         socketEntrada.setSoTimeout(TIMEOUT);
@@ -74,11 +101,7 @@ public class Cliente
 	{
     	
     	socketSalida = new DatagramSocket(puerto);
-//    	System.out.println("PRE");
-//    	DatagramSocket socketSalida2 = new DatagramSocket(puerto);
-//    	System.out.println("POST");
-//    	socketSalida2.close();
-    	System.out.println("ENVIO LADO CLIENTE:" + informacion);
+    	System.out.println("ENVIO LADO CLIENTE, " + puerto + ":" + informacion);
 		byte[] buffer2 = informacion.getBytes();
 		System.out.println("buffer.length: " + buffer2.length);
 		if(buffer2.length > Servidor.TAMANIOBUFFER)
@@ -104,16 +127,16 @@ public class Cliente
 				System.out.println("Paquete " + i + " enviado");
 				System.out.println(contenidoPaquete);
 			}
-			socketSalida.close();
 		}
 		else
 		{
-			socketSalida = new DatagramSocket(puerto);
+//			socketSalida = new DatagramSocket(puerto);
 			System.out.println("Envio sencillo");
 			DatagramPacket paquete = new DatagramPacket(buffer2, buffer2.length, direccionDestino, puertoDeDestino);
 			socketSalida.send(paquete);
-			socketSalida.close();
+			
 		}
+		socketSalida.close();
 	}
     
     
