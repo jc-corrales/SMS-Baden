@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jna"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jnaPlat"/>
+	<classpathentry kind="lib" path="lib/vlcj-2.1.0.jar" sourcepath="C:/Users/ADMIN/.m2/repository/uk/co/caprica/vlcj/2.1.0/vlcj-2.1.0-sources.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.8.0_231"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
