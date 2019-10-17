@@ -22,6 +22,9 @@ import javax.swing.JPanel;
  */
 public class ClienteUDPStream 
 {
+	public static final int CANAL1 = 1234;
+	public static final int CANAL2 = 5678;
+
 	/**
 	 * Modela el datagram de la conexión UDP
 	 */
@@ -34,31 +37,8 @@ public class ClienteUDPStream
 	 */
 	public static void main(String[] args)
 	{
-		try 
-		{
-			datagram = new DatagramSocket();
-
-			byte[] init = new byte[62000];
-			init = "givedata".getBytes();
-
-			InetAddress addr = InetAddress.getLocalHost();
-			DatagramPacket dp = new DatagramPacket(init,init.length,addr,4321);
-
-			datagram.send(dp);
-
-			DatagramPacket rcv = new DatagramPacket(init, init.length);
-
-			datagram.receive(rcv);
-			System.out.println(new String(rcv.getData()));
-
-			System.out.println(datagram.getPort());
-			Video vd = new Video();
-			vd.start();
-		} 
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}		
+		Video vd = new Video();
+		vd.start();
 	}
 }
 
@@ -67,6 +47,16 @@ public class ClienteUDPStream
  */
 class Video extends Thread 
 {
+	/**
+	 * Modela el boton de enviar
+	 */
+	public Button canal1 = new Button("Ver canal 1");
+
+	/**
+	 * Modela el boton de enviar
+	 */
+	public Button canal2 = new Button("Ver canal 2");
+
 	/**
 	 * Modela el boton de enviar
 	 */
@@ -81,22 +71,22 @@ class Video extends Thread
 	 * Modela boolean que indica si el stream esta en pausa
 	 */
 	public boolean pausar = false;
-	
+
 	/**
 	 * Modela el frame principal
 	 */
 	public JFrame framePrincipal = new JFrame();
-	
+
 	/**
 	 * Modela el panel de video
 	 */
 	public static JPanel panelVideo = new JPanel(new GridLayout(2,1));
-	
+
 	/**
 	 * Modela el panel de botones
 	 */
-	public static JPanel panelBotones = new JPanel(new GridLayout(3,1));
-	
+	public static JPanel panelBotones = new JPanel(new GridLayout(2,2));
+
 	/**
 	 * Modela label donde se muestra el stream
 	 */
@@ -111,17 +101,17 @@ class Video extends Thread
 	 * Modela el datagram packet que se va a recibir
 	 */
 	public DatagramPacket dp = new DatagramPacket(bufBytes, bufBytes.length);
-	
+
 	/**
 	 * Buff de imagen que se va a poner
 	 */
 	public BufferedImage imgPoner;
-	
+
 	/**
 	 * Buff de imagen recivida
 	 */
 	public BufferedImage imgActual;
-	
+
 	/**
 	 * Img icon para poner al label de video
 	 */
@@ -133,7 +123,7 @@ class Video extends Thread
 	public Video() 
 	{
 		framePrincipal.setSize(640, 960);
-		framePrincipal.setTitle("Vista cliente");
+		framePrincipal.setTitle("Cliente stream UDP");
 		framePrincipal.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		framePrincipal.setAlwaysOnTop(true);
 		framePrincipal.setLayout(new BorderLayout());
@@ -142,8 +132,11 @@ class Video extends Thread
 		panelVideo.add(panelBotones);
 		framePrincipal.add(panelVideo);
 
+		panelBotones.add(canal1);
+		panelBotones.add(canal2);
 		panelBotones.add(pausa);
 		panelBotones.add(subir);
+
 		pausa.addActionListener(new ActionListener() 
 		{
 			@Override
@@ -165,13 +158,69 @@ class Video extends Thread
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				subirVideo();
+
 			}
+		});
 
-			private void subirVideo() 
+		canal1.addActionListener(new ActionListener() 
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
 			{
+				try
+				{
+					ClienteUDPStream.datagram = new DatagramSocket();
 
+					byte[] init = new byte[62000];
+					init = "givedata".getBytes();
 
+					InetAddress addr = InetAddress.getLocalHost();
+					DatagramPacket dp = new DatagramPacket(init,init.length,addr,ClienteUDPStream.CANAL1);
+
+					ClienteUDPStream.datagram.send(dp);
+
+					DatagramPacket rcv = new DatagramPacket(init, init.length);
+
+					ClienteUDPStream.datagram.receive(rcv);
+					System.out.println(new String(rcv.getData()));
+
+					System.out.println(ClienteUDPStream.datagram.getPort());
+				}		
+				catch (IOException e1)
+				{
+					e1.printStackTrace();
+				}	
+			}
+		});
+
+		canal2.addActionListener(new ActionListener() 
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				try
+				{
+					ClienteUDPStream.datagram = new DatagramSocket();
+
+					byte[] init = new byte[62000];
+					init = "givedata".getBytes();
+
+					InetAddress addr = InetAddress.getLocalHost();
+					DatagramPacket dp = new DatagramPacket(init,init.length,addr,ClienteUDPStream.CANAL2);
+
+					ClienteUDPStream.datagram.send(dp);
+
+					DatagramPacket rcv = new DatagramPacket(init, init.length);
+
+					ClienteUDPStream.datagram.receive(rcv);
+					System.out.println(new String(rcv.getData()));
+
+					System.out.println(ClienteUDPStream.datagram.getPort());
+				}		
+				catch (IOException e1)
+				{
+					e1.printStackTrace();
+				}	
 			}
 		});
 	}
@@ -183,25 +232,27 @@ class Video extends Thread
 		{	
 			do
 			{
-				ClienteUDPStream.datagram.receive(dp);
-				ByteArrayInputStream bais = new ByteArrayInputStream(bufBytes);
-
-				imgActual = ImageIO.read(bais);
-				
-				if(!pausar)
+				if(ClienteUDPStream.datagram != null)
 				{
-					imgPoner = imgActual;
-				}
-				if (imgPoner != null)
-				{
-					imc = new ImageIcon(imgPoner);
-					labelVideo.setIcon(imc);
+					ClienteUDPStream.datagram.receive(dp);
+					ByteArrayInputStream bais = new ByteArrayInputStream(bufBytes);
 
-					Thread.sleep(15);
-				}
-				framePrincipal.revalidate();
-				framePrincipal.repaint();
+					imgActual = ImageIO.read(bais);
 
+					if(!pausar)
+					{
+						imgPoner = imgActual;
+					}
+					if (imgPoner != null)
+					{
+						imc = new ImageIcon(imgPoner);
+						labelVideo.setIcon(imc);
+
+						Thread.sleep(10);
+					}
+					framePrincipal.revalidate();
+					framePrincipal.repaint();
+				}
 			} 
 			while (true);
 		} 
