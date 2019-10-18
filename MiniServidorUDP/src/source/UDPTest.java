@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 
 public class UDPTest extends TestCase{
 	private Cliente client;
-	private Cliente client2;
+//	private Cliente client2;
 	private String respuesta = "Buenos dias, aqui el almirante Gregorio";
 	 
 //    @Before
