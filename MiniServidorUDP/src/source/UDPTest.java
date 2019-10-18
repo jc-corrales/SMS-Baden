@@ -35,7 +35,7 @@ public class UDPTest extends TestCase{
 //            client2.close();
 //            assertEquals(respuesta, echo);
 //            System.out.println(echo);
-            echo = client.sendEcho("server is workingd");
+            echo = client.sendEcho("server is working");
             assertFalse(echo.equals("hello server"));
             System.out.println("ECHO FINAL: " + echo);
 //            assertEquals(respuesta, echo);
@@ -48,7 +48,7 @@ public class UDPTest extends TestCase{
  
 //    @After
     public void tearDown() throws IOException{
-        client.sendEcho("ende");
+        client.sendEcho("end");
         client.close();
     }
 

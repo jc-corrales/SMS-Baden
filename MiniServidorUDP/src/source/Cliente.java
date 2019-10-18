@@ -34,11 +34,11 @@ public class Cliente
         if(firstTime)
         {
         	
-            enviarInformacion("nu");
+            enviarInformacion("nu".getBytes());
             String respuesta = recibirInformacion();
             if(respuesta.equals("READ"))
             {
-            	enviarInformacion(msg);
+            	enviarInformacion(msg.getBytes());
             	received = recibirInformacion();
             }
             else
@@ -50,7 +50,7 @@ public class Cliente
         }
         else
         {
-        	enviarInformacion(msg);
+        	enviarInformacion(msg.getBytes());
         	received = recibirInformacion();
         }
 //        enviarInformacion(msg);
@@ -97,17 +97,23 @@ public class Cliente
         return masterAnswer;
     }
     
-    private void enviarInformacion(String informacion) throws IOException
+    private void enviarInformacion(byte[] buffer2) throws IOException
 	{
     	
     	socketSalida = new DatagramSocket(puerto);
-    	System.out.println("ENVIO LADO CLIENTE, " + puerto + ":" + informacion);
-		byte[] buffer2 = informacion.getBytes();
+    	System.out.println("ENVIO LADO Cliente:" + (new String(buffer2)) + ", puerto: " + puerto);
+//		byte[] buffer2 = informacion.getBytes();
 		System.out.println("buffer.length: " + buffer2.length);
 		if(buffer2.length > Servidor.TAMANIOBUFFER)
 		{
 			System.out.println("Envio multiple requerido");
-			int numSubBuffers = (int) Math.ceil(buffer2.length/Servidor.TAMANIOBUFFER);
+			double doubleNumSubBuffers = buffer2.length/Servidor.TAMANIOBUFFER;
+			int numSubBuffers = (int) doubleNumSubBuffers;
+			if (doubleNumSubBuffers % 1 != 0)
+			{
+				numSubBuffers++;
+			}
+			
 			ArrayList<byte[]> listaDeBuffers = new ArrayList<byte[]>();
 			System.out.println("Sub Buffers requeridos: " + numSubBuffers);
 			for(int i = 0; i < numSubBuffers; i++)
@@ -120,13 +126,14 @@ public class Cliente
 					int contadorPosicion = j + (i*Servidor.TAMANIOBUFFER);
 					listaDeBuffers.get(i)[j] = buffer2[contadorPosicion];
 				}
-				
+				System.out.println("TAMAÑO DE LISTA: " + listaDeBuffers.get(i).length);
 				DatagramPacket paquete = new DatagramPacket(listaDeBuffers.get(i), listaDeBuffers.get(i).length, direccionDestino, puertoDeDestino);
 				socketSalida.send(paquete);
 				String contenidoPaquete = new String(listaDeBuffers.get(i), 0, listaDeBuffers.get(i).length);
 				System.out.println("Paquete " + i + " enviado");
 				System.out.println(contenidoPaquete);
 			}
+			socketSalida.close();
 		}
 		else
 		{
@@ -134,9 +141,8 @@ public class Cliente
 			System.out.println("Envio sencillo");
 			DatagramPacket paquete = new DatagramPacket(buffer2, buffer2.length, direccionDestino, puertoDeDestino);
 			socketSalida.send(paquete);
-			
+			socketSalida.close();
 		}
-		socketSalida.close();
 	}
     
     

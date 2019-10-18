@@ -57,7 +57,7 @@ public class Servidor extends Thread
                 	continue;
                 }
 //                System.out.println("MIREN, RESPUESTA: " + received); 
-                if (received.equals("ende")) {
+                if (received.equals("end")) {
                     running = false;
                     continue;
                 }
