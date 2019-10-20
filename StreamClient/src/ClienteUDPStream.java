@@ -4,15 +4,24 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.Socket;
+
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 /**
@@ -24,6 +33,7 @@ public class ClienteUDPStream
 {
 	public static final int CANAL1 = 1234;
 	public static final int CANAL2 = 5678;
+	public static final int CANAL3 = 7654;
 
 	/**
 	 * Modela el datagram de la conexión UDP
@@ -60,7 +70,7 @@ class Video extends Thread
 	/**
 	 * Modela el boton de enviar
 	 */
-	public Button subir = new Button("Subir video");
+	public Button subir = new Button("Subir video al servidor");
 
 	/**
 	 * Modela el boton de enviar
@@ -71,6 +81,11 @@ class Video extends Thread
 	 * Modela boolean que indica si el stream esta en pausa
 	 */
 	public boolean pausar = false;
+
+	/**
+	 * Modela boolean que indica si el stream esta en pausa
+	 */
+	public boolean upload = false;
 
 	/**
 	 * Modela el frame principal
@@ -122,12 +137,13 @@ class Video extends Thread
 	 */
 	public Video() 
 	{
-		framePrincipal.setSize(640, 960);
+		framePrincipal.setSize(480, 600);
 		framePrincipal.setTitle("Cliente stream UDP");
 		framePrincipal.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		framePrincipal.setAlwaysOnTop(true);
 		framePrincipal.setLayout(new BorderLayout());
 		framePrincipal.setVisible(true);
+		panelVideo.setSize(480, 400);
 		panelVideo.add(labelVideo);
 		panelVideo.add(panelBotones);
 		framePrincipal.add(panelVideo);
@@ -145,10 +161,12 @@ class Video extends Thread
 				if(pausar)
 				{
 					pausar = false;
+					pausa.setLabel("Pausar");
 				}
 				else
 				{
 					pausar = true;
+					pausa.setLabel("Resumir");
 				}
 			}
 		});
@@ -158,6 +176,55 @@ class Video extends Thread
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
+				try
+				{
+					Socket canal = new Socket("localhost", ClienteUDPStream.CANAL3);
+
+					PrintWriter outCliente = new PrintWriter(canal.getOutputStream( ), true);				
+					
+					//Seleccionar archivo
+					boolean seguir = false;
+					StringBuilder url = new StringBuilder();
+					File myFile = new File("");
+					while(!seguir)
+					{
+						JFileChooser jf = new JFileChooser("./data");
+						jf.showOpenDialog(framePrincipal);
+						
+						myFile = jf.getSelectedFile();
+						url = new StringBuilder(myFile.getName()); 
+						System.out.println(url.toString());
+						if(url.toString().endsWith("mp4") || url.toString().endsWith("webm") || url.toString().endsWith(".avi") || url.toString().endsWith("mov") || url.toString().endsWith("flv"))
+						{
+							seguir = true;
+						}
+						else
+						{
+							JOptionPane.showMessageDialog(framePrincipal, "Se admiten únicamente archivos de video con extenciones como mp4, webm, avi, mov o flv"
+									, "Warning", JOptionPane.WARNING_MESSAGE);
+						}
+					}
+					
+					//Enviar nombre file al server
+					outCliente.println(url.toString());
+					
+					//Enviar el archivo
+					int count;
+					byte[] buffer = new byte[1024];
+					OutputStream outs = canal.getOutputStream();
+					BufferedInputStream ins = new BufferedInputStream(new FileInputStream(myFile));
+					while ((count = ins.read(buffer)) >= 0) 
+					{
+						outs.write(buffer, 0, count);
+					}
+					outs.flush();
+					ins.close();
+					canal.close();
+				} 
+				catch (IOException e1)
+				{
+					e1.printStackTrace();
+				}
 
 			}
 		});
@@ -169,6 +236,7 @@ class Video extends Thread
 			{
 				try
 				{
+					upload = false;
 					ClienteUDPStream.datagram = new DatagramSocket();
 
 					byte[] init = new byte[62000];
@@ -182,9 +250,6 @@ class Video extends Thread
 					DatagramPacket rcv = new DatagramPacket(init, init.length);
 
 					ClienteUDPStream.datagram.receive(rcv);
-					System.out.println(new String(rcv.getData()));
-
-					System.out.println(ClienteUDPStream.datagram.getPort());
 				}		
 				catch (IOException e1)
 				{
@@ -200,6 +265,7 @@ class Video extends Thread
 			{
 				try
 				{
+					upload = false;
 					ClienteUDPStream.datagram = new DatagramSocket();
 
 					byte[] init = new byte[62000];
@@ -232,7 +298,7 @@ class Video extends Thread
 		{	
 			do
 			{
-				if(ClienteUDPStream.datagram != null)
+				if(ClienteUDPStream.datagram != null && !upload)
 				{
 					ClienteUDPStream.datagram.receive(dp);
 					ByteArrayInputStream bais = new ByteArrayInputStream(bufBytes);

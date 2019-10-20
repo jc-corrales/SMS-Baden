@@ -4,7 +4,11 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 
@@ -29,6 +33,7 @@ public class StreamingServer extends Thread
 {
 	private static final int CANAL1 = 1234;
 	private static final int CANAL2 = 5678;
+	private static final int CANAL3 = 7654;
 
 	/**
 	 * lista inet de usuarios
@@ -57,34 +62,99 @@ public class StreamingServer extends Thread
 	 */
 	public static void main(String[] args) throws Exception
 	{
+		boolean canal1 = false;
+		boolean canal2 = false;
+		boolean canal3 = false;
 		Scanner sc= new Scanner(System.in);
-		System.out.println("Ingrese el canal a inicializar (1 o 2)");
-		int can = sc.nextInt();
-		if(can == 1)
+		while(true)
 		{
-			sc.close();
-			StreamingServer c = new StreamingServer(CANAL1);
-			c.start();
+			System.out.println("Ingrese el canal a inicializar (1 o 2 para stream) o 3 para canal de transmisión de videos \n");
+			int can = sc.nextInt();
+			if(can == 1)
+			{
+				if(!canal1)
+				{
+					canal1 = true;
+					System.out.println("Canal con puerto " + CANAL1 + " ha sido correctamemte inicializado");
+					StreamingServer c = new StreamingServer(CANAL1);
+					c.start();
+				}
+				else
+				{
+					System.out.println("Ya está inicializado este canal");
+				}
+			}
+			else if (can == 2)
+			{
+				if(!canal2)
+				{
+					canal2 = true;
+					System.out.println("Canal con puerto " + CANAL2 + " ha sido correctamemte inicializado");
+					StreamingServer c = new StreamingServer(CANAL2);
+					c.start();	
+				}
+				else
+				{
+					System.out.println("Ya está inicializado este canal");
+				}
+			}
+			else if (can == 3)
+			{
+				if(!canal3)
+				{
+					canal3 = true;
+					System.out.println("Canal con puerto " + CANAL3 + " ha sido correctamemte inicializado");
+					getVideo();
+					
+				}
+				else
+				{
+					System.out.println("Ya está inicializado este canal");
+				}
+			}
+			else
+			{
+				sc.close();
+				System.out.println("Solo hay 3 canales implementados");
+			}
 		}
-		else if (can == 2)
+	}
+
+	/**
+	 * Se obiene video del cliente
+	 * @throws IOException
+	 * @throws AWTException
+	 */
+	private static void getVideo() throws IOException, AWTException
+	{
+		int numT = 5;
+		ExecutorService exec = Executors.newFixedThreadPool(numT);
+
+		boolean status = true;
+		try
 		{
-			sc.close();
-			StreamingServer c = new StreamingServer(CANAL2);
-			c.start();
+			ServerSocket puntoDeEntrada = new ServerSocket(CANAL3);
+			while(status)
+			{
+				Socket cliente = puntoDeEntrada.accept();
+				ConexionEnvioVideos con = new ConexionEnvioVideos(cliente);
+				exec.execute(con);
+			}
+			puntoDeEntrada.close();
 		}
-		else
+		catch (Exception e)
 		{
-			sc.close();
-			System.out.println("Solo 2 hay 2 canales implementados");
+			System.err.println(e.getMessage());
 		}
-	    
 	}
 
 	/**
 	 * Constructor server
+	 * @throws IOException 
+	 * @throws AWTException 
 	 * @throws Exception
 	 */
-	public StreamingServer(int puerto)  throws Exception
+	public StreamingServer(int puerto) throws IOException, AWTException
 	{
 		NativeLibrary.addSearchPath("libvlc", "C:\\Program Files (x86)\\VideoLAN\\VLC");
 
@@ -98,13 +168,10 @@ public class StreamingServer extends Thread
 
 		new Interfaz(puerto);
 		numUsuarios = 0;
-		
+
 		while (true) 
 		{
-
-			System.out.println(serv.getPort());
 			serv.receive(dp);
-			System.out.println(new String(dp.getData()));
 			buf = "starts".getBytes();
 
 			arregloInets[numUsuarios] = dp.getAddress();
@@ -134,7 +201,7 @@ class VideoStream extends Thread
 	private BufferedImage mybuf;
 	private ImageIcon img;
 	private Rectangle rc;
-	
+
 	/**
 	 * Constructor vid
 	 * @param datagram socket
@@ -154,22 +221,14 @@ class VideoStream extends Thread
 		{
 			try 
 			{
-
 				int num = StreamingServer.numUsuarios;
-
-				rc = new Rectangle(new Point(Interfaz.frame.getX() + 8, Interfaz.frame.getY() + 27), new Dimension(Interfaz.panel.getWidth(), Interfaz.frame.getHeight() / 2));
-
+				rc = new Rectangle(new Point(Interfaz.frame.getX(), Interfaz.frame.getY()), new Dimension(Interfaz.panel.getWidth(), Interfaz.frame.getHeight()));
 				mybuf = rb.createScreenCapture(rc);
-
 				img = new ImageIcon(mybuf);
-
 				label.setIcon(img);
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
 				ImageIO.write(mybuf, "jpg", baos);
-
 				outbuff = baos.toByteArray();
-
 				for (int j = 0; j < num; j++)
 				{
 					DatagramPacket dp = new DatagramPacket(outbuff, outbuff.length, StreamingServer.arregloInets[j], StreamingServer.puertos[j]);
@@ -196,23 +255,19 @@ class Interfaz
 	private EmbeddedMediaPlayer mediaPlayer;
 
 	public static JPanel panel;
-	private static JPanel myjp;
 	private Canvas canvas;
 	public static JFrame frame;
 	public static int xpos = 0, ypos = 0;
 	private String url;
 
-
 	// Constructor
 	public Interfaz(int canal) 
 	{
-
-		// Creating a panel that while contains the canvas
 		panel = new JPanel();
 		panel.setLayout(new BorderLayout());
 
 		JPanel mypanel = new JPanel();
-		mypanel.setLayout(new GridLayout(2, 1));
+		mypanel.setLayout(new GridLayout(1, 1));
 
 		canvas = new Canvas();
 		canvas.setBackground(Color.BLACK);
@@ -221,14 +276,13 @@ class Interfaz
 
 		mediaPlayerFactory = new MediaPlayerFactory();
 		mediaPlayer = mediaPlayerFactory.newEmbeddedMediaPlayer();
-		mediaPlayer.setPause(true);
 		CanvasVideoSurface videoSurface = mediaPlayerFactory.newVideoSurface(canvas);
 		mediaPlayer.setVideoSurface(videoSurface);
 
 		frame = new JFrame("Server stream"+canal);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setLocation(200, 0);
-		frame.setSize(640, 700);
+		frame.setSize(480, 400);
 		frame.setAlwaysOnTop(true);
 
 		mypanel.add(panel);
@@ -237,20 +291,18 @@ class Interfaz
 		xpos = frame.getX();
 		ypos = frame.getY();
 
-		myjp = new JPanel(new GridLayout(1, 1));
-
 		Button bn = new Button("Elegir video");
-		myjp.add(bn);
+		frame.add(bn, BorderLayout.SOUTH);
 
-		mypanel.add(myjp);
 		mypanel.revalidate();
 		mypanel.repaint();
 
-		bn.addActionListener(new ActionListener() {
-
+		bn.addActionListener(new ActionListener()
+		{
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser jf = new JFileChooser();
+			public void actionPerformed(ActionEvent e) 
+			{
+				JFileChooser jf = new JFileChooser("./data");
 				jf.showOpenDialog(frame);
 				File f;
 				f = jf.getSelectedFile();
