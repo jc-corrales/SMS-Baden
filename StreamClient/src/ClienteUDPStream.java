@@ -31,8 +31,19 @@ import javax.swing.JPanel;
  */
 public class ClienteUDPStream 
 {
+	/**
+	 * Puerto que representa el canal 1 de stream
+	 */
 	public static final int CANAL1 = 1234;
+	
+	/**
+	 * Puerto que representa el canal 2 de stream
+	 */
 	public static final int CANAL2 = 5678;
+	
+	/**
+	 * Puerto que representa el canal 3 (envío de videos del cliente al servidor)
+	 */
 	public static final int CANAL3 = 7654;
 
 	/**
@@ -137,6 +148,7 @@ class Video extends Thread
 	 */
 	public Video() 
 	{
+		//Creacion frame principal
 		framePrincipal.setSize(480, 600);
 		framePrincipal.setTitle("Cliente stream UDP");
 		framePrincipal.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -148,16 +160,19 @@ class Video extends Thread
 		panelVideo.add(panelBotones);
 		framePrincipal.add(panelVideo);
 
+		//Agnadir botones al panel botones
 		panelBotones.add(canal1);
 		panelBotones.add(canal2);
 		panelBotones.add(pausa);
 		panelBotones.add(subir);
 
+		//Actions listeners de los botones
 		pausa.addActionListener(new ActionListener() 
 		{
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
+				//Se cambia el estado de pausar y también el label del boton
 				if(pausar)
 				{
 					pausar = false;
@@ -176,16 +191,19 @@ class Video extends Thread
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
+				//Se utiliza protocolo TCP para que el cliente suba archivos al servidor usando el canal 3
 				try
 				{
+					//Socket TCP con localhost para prueba local
 					Socket canal = new Socket("localhost", ClienteUDPStream.CANAL3);
-
 					PrintWriter outCliente = new PrintWriter(canal.getOutputStream( ), true);				
 					
 					//Seleccionar archivo
 					boolean seguir = false;
 					StringBuilder url = new StringBuilder();
 					File myFile = new File("");
+					
+					//Si no se selecciona un archivo de video vuelve a salir el popup de JFileChooser hasta que escoja un archivo adecuado
 					while(!seguir)
 					{
 						JFileChooser jf = new JFileChooser("./data");
@@ -236,19 +254,14 @@ class Video extends Thread
 			{
 				try
 				{
-					upload = false;
+					//Set up de conexión UDP al canal 1 de stream
 					ClienteUDPStream.datagram = new DatagramSocket();
-
 					byte[] init = new byte[62000];
 					init = "givedata".getBytes();
-
 					InetAddress addr = InetAddress.getLocalHost();
 					DatagramPacket dp = new DatagramPacket(init,init.length,addr,ClienteUDPStream.CANAL1);
-
 					ClienteUDPStream.datagram.send(dp);
-
 					DatagramPacket rcv = new DatagramPacket(init, init.length);
-
 					ClienteUDPStream.datagram.receive(rcv);
 				}		
 				catch (IOException e1)
@@ -265,23 +278,15 @@ class Video extends Thread
 			{
 				try
 				{
-					upload = false;
+					//Set up de conexión UDP al canal 2
 					ClienteUDPStream.datagram = new DatagramSocket();
-
 					byte[] init = new byte[62000];
 					init = "givedata".getBytes();
-
 					InetAddress addr = InetAddress.getLocalHost();
 					DatagramPacket dp = new DatagramPacket(init,init.length,addr,ClienteUDPStream.CANAL2);
-
 					ClienteUDPStream.datagram.send(dp);
-
 					DatagramPacket rcv = new DatagramPacket(init, init.length);
-
 					ClienteUDPStream.datagram.receive(rcv);
-					System.out.println(new String(rcv.getData()));
-
-					System.out.println(ClienteUDPStream.datagram.getPort());
 				}		
 				catch (IOException e1)
 				{
@@ -314,7 +319,7 @@ class Video extends Thread
 						imc = new ImageIcon(imgPoner);
 						labelVideo.setIcon(imc);
 
-						Thread.sleep(10);
+						Thread.sleep(2);
 					}
 					framePrincipal.revalidate();
 					framePrincipal.repaint();

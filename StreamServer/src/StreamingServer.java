@@ -53,7 +53,7 @@ public class StreamingServer extends Thread
 	/**
 	 *  Datagram socket server
 	 */
-	public DatagramSocket serv;
+	public DatagramSocket datagramServidor;
 
 	/**
 	 * Main del server
@@ -157,33 +157,23 @@ public class StreamingServer extends Thread
 	public StreamingServer(int puerto) throws IOException, AWTException
 	{
 		NativeLibrary.addSearchPath("libvlc", "C:\\Program Files (x86)\\VideoLAN\\VLC");
-
 		StreamingServer.arregloInets = new InetAddress[25];
 		puertos = new int[25];
-
 		DatagramSocket serv = new DatagramSocket(puerto);
-
 		byte[] buf = new byte[62000];
 		DatagramPacket dp = new DatagramPacket(buf, buf.length);
-
 		new Interfaz(puerto);
 		numUsuarios = 0;
-
 		while (true) 
 		{
 			serv.receive(dp);
 			buf = "starts".getBytes();
-
 			arregloInets[numUsuarios] = dp.getAddress();
 			puertos[numUsuarios] = dp.getPort();
-
 			DatagramPacket dsend = new DatagramPacket(buf, buf.length, arregloInets[numUsuarios], puertos[numUsuarios]);
 			serv.send(dsend);
-
 			VideoStream sendvid = new VideoStream(serv);
-
 			sendvid.start();
-
 			numUsuarios++;
 		}
 	}
@@ -235,7 +225,7 @@ class VideoStream extends Thread
 					datSock.send(dp);
 					baos.flush();
 				}
-				Thread.sleep(10);
+				Thread.sleep(2);
 			}
 			catch (IOException | InterruptedException e)
 			{
