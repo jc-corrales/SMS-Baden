@@ -6,8 +6,8 @@ import java.util.ArrayList;
 
 public class Main {
 
-	public final static int TAMANIOBUFFER = 2;
-	private final static int TIMEOUT = 20000;
+	public final static int TAMANIOBUFFER = 1024;
+	private final static int TIMEOUTLECTURA = 20000;
 	private DatagramSocket socketEntrada;
 	private DatagramSocket socketSalida;
 	private int puerto;
@@ -39,8 +39,11 @@ public class Main {
 
 	public void establecerConexion() throws IOException
 	{
+		direccionDestino = InetAddress.getByName("localhost");
+		puertoDeDestino = PUERTO;
+		buffer = new byte[1024];
 		enviarInformacion(HOLA.getBytes());
-		String linea = recibirInformacion().toString();
+		String linea = new String(recibirInformacion());
 		if(linea.startsWith(HOLA))
 		{
 			estado = true;
@@ -199,7 +202,7 @@ public class Main {
 	{
 		socketEntrada = new DatagramSocket(puerto);
 		System.out.println("RECEPCION LADO CLIENTE, puerto: " + puerto);
-		socketEntrada.setSoTimeout(TIMEOUT);
+		socketEntrada.setSoTimeout(TIMEOUTLECTURA);
 		byte[] respuesta = new byte[TAMANIOBUFFER];
 		boolean firstTime = true;
 		try

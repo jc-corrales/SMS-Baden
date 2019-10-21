@@ -11,7 +11,7 @@ import java.util.Collection;
 
 public class Servidor extends Thread
 {
-	public final static int TAMANIOBUFFER = 2;
+	public final static int TAMANIOBUFFER = 20;
 	public final static int TIMEOUT = 10000;
 	public final static int TIMEOUTMAESTRO = 100000;
 	private int puertoPrincipal = 4445;

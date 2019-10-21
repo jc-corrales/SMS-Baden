@@ -159,6 +159,7 @@ public class Cliente
 			{
 				respuestaFinal = respuesta;
 			}
+			System.out.println("RECEPCIÓN FINAL LADO CLIENTE: " + new String(respuestaFinal));
 			return respuestaFinal;
 		}
 		else
@@ -234,7 +235,19 @@ public class Cliente
 		{
 			//			socketSalida = new DatagramSocket(puerto);
 			System.out.println("Envio sencillo");
-			DatagramPacket paquete = new DatagramPacket(buffer2, buffer2.length, direccionDestino, puertoDeDestino);
+			byte[] bufferTemporal = new byte[Servidor.TAMANIOBUFFER];
+			for(int i = 0; i < bufferTemporal.length; i++)
+			{
+				if(i < buffer2.length)
+				{
+					bufferTemporal[i] = buffer2[i];
+				}
+				else
+				{
+					bufferTemporal[i] = 4;
+				}
+			}
+			DatagramPacket paquete = new DatagramPacket(bufferTemporal, bufferTemporal.length, direccionDestino, puertoDeDestino);
 			socketSalida.send(paquete);
 			socketSalida.close();
 		}

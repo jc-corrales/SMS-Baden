@@ -22,24 +22,15 @@ import java.util.ArrayList;
  */
 public class Conexion extends Thread
 {
+//	private final static int TAMANIOBUFFER = 1024;
 	private final static int TIMEOUT = 120000;
+	private final static int TIMEOUTLECTURA = 10000;
 	private final static String DESCARGA= "DESCARGA";
 	private final static String MULTIPLE= "MULTIPLE";
 	private final static String SALIR= "SALIR";
 
-	/**
-	 * Atributo que contiene el socket de la conexion.
-	 */
-	private DatagramSocket socket; 
-	
-	private int puertoDeDestino;
-	
-	private InetAddress direccionDestino;
-	
-	private String mensaje;
-	
-	private byte[] buffer;
-	
+	private DatagramSocket socketEntrada;
+	private DatagramSocket socketSalida;
 	/**
 	 * modela si ya se envio el nombre de arch
 	 */
@@ -97,6 +88,10 @@ public class Conexion extends Thread
 	
 	private long numeroDePaquetesEnviados;
 	private String nomArchivoEnviado;
+	private int puertoAsignado;
+	private int puertoDeDestino;
+	private InetAddress direccionDestino;
+	private byte[] buffer;
 
 	// -----------------------------------------------------------------
 	// Constructor
@@ -108,27 +103,22 @@ public class Conexion extends Thread
 	 * @param administrador Parametro de la clase que conecta el programa con la base de datos.
 	 * @throws IOException Excepcion que pueda ser generada debido al lector y escritor.
 	 */
-	public Conexion (DatagramPacket paqueteInicial, int pId, Servidor pServidor, String nomArchivos) throws IOException
+	public Conexion (int puertoAsignado, int puertoDestino, InetAddress direccionDestino, int tamanioBuffer, int pId, Servidor pServidor, String nomArchivos) throws IOException
 	{
-		socket = new DatagramSocket(Servidor.PUERTO);
-		puertoDeDestino = paqueteInicial.getPort();
-		direccionDestino = paqueteInicial.getAddress();
-		mensaje =  new String(paqueteInicial.getData(), 0 , paqueteInicial.getLength());
-		buffer = new byte[Servidor.TAMANIOBUFFER];
+		buffer = new byte[tamanioBuffer];
+		this.puertoAsignado = puertoAsignado;
+		this.puertoDeDestino = puertoDestino;
+		this.direccionDestino = direccionDestino;
 		enviadoNomArch = false;
 		tamanioArchivo = 0;
 		Long puntoDeInicio = System.currentTimeMillis();
 		timestamp = new Timestamp(puntoDeInicio);
 		tiempoInicio = puntoDeInicio;
-
-//		setSocket(canal);
 		setEstadoSesion(true);
 		this.id = pId;
 		this.servidor = pServidor;
 		this.nomArchivos = nomArchivos;
-		socket.setSoTimeout(TIMEOUT);
 		estadoExito = false;
-		cliente = socket.getRemoteSocketAddress().toString();
 	}
 
 	/**
@@ -137,23 +127,23 @@ public class Conexion extends Thread
 	 */
 	public void cerrarSesion(String motivo) throws Exception
 	{
-		try
-		{
+//		try
+//		{
 			estadoSesion = false;
 			//out.println("Sesion terminada: " + motivo);
 //			in.close();
 //			out.close();
-			socket.close();
+//			socket.close();
 			long tiempoDeTransferencia = tiempoFin - tiempoInicio;
 			long numeroDePaquetesTransmitidos = numeroDePaquetesEnviados;
 			long bytesTransmitidos = (long) tamanioArchivo;
 			EscritorDeLog escritor = new EscritorDeLog(id, timestamp, nomArchivoEnviado, tamanioArchivo, cliente, estadoExito, tiempoDeTransferencia, numeroDePaquetesEnviados, numeroDePaquetesTransmitidos, bytesTransmitidos);
 			escritor.imprimirLog();
-		}
-		catch (Exception e)
-		{		
-			throw new Exception("Error en cierre de sesion:" + e.getMessage());
-		}
+//		}
+//		catch (IOException e)
+//		{		
+//			throw new Exception("Error en cierre de sesion:" + e.getMessage());
+//		}
 	}
 
 	/**
@@ -165,9 +155,10 @@ public class Conexion extends Thread
 		try
 		{
 			//Tiempo de timeout igual a 2 minutos
-			in.readLine();
-//			out.println("HOLA:"+id);
-			enviarInformacion("HOLA:"+id);
+//			in.readLine();
+//			out.println();
+			String respuesta1 = "HOLA:"+id;
+			enviarInformacion(respuesta1.getBytes());
 			StringBuilder estado = new StringBuilder();
 			if(servidor.darMultiple())
 			{
@@ -178,8 +169,8 @@ public class Conexion extends Thread
 				estado.append("SIMPLE");
 			}
 //			out.println("ESTADO:"+estado.toString());
-			enviarInformacion("ESTADO:"+estado.toString());
-
+			String respuesta2 = "ESTADO:"+estado.toString();
+			enviarInformacion(respuesta2.getBytes());
 			while(estadoSesion)
 			{	
 				if(!servidor.darMultiple())
@@ -187,9 +178,8 @@ public class Conexion extends Thread
 					String archivos = "ARCHIVOS:"+nomArchivos;
 					if (!enviadoNomArch) 
 					{
-						
 //						out.println(archivos);
-						enviarInformacion(archivos);
+						enviarInformacion(archivos.getBytes());
 						enviadoNomArch = true;
 					}
 
@@ -197,14 +187,28 @@ public class Conexion extends Thread
 					long start = System.currentTimeMillis();
 
 					//Se recibe la solicitud de un metodo
-					String metodoSolicitado = in.readLine();
-
+//					String metodoSolicitado = in.readLine();
+					
 					//Se para el timer
 					long end = System.currentTimeMillis();
 
 					//Se calcula el tiempo iddle del usuario
 					long duration = (end - start);
-
+					boolean recepcionConfirmada = false;
+					String metodoSolicitado = "";
+					while(!recepcionConfirmada && duration < TIMEOUT)
+					{
+						 try
+						 {
+							 metodoSolicitado = new String(recibirInformacion());
+							 recepcionConfirmada = true;
+						 }
+						 catch(NullPointerException e)
+						 {
+							 continue;
+						 }
+					}
+					
 					//Si el tiempo supera el de timeout se cierra la sesion
 					if(duration >= TIMEOUT)
 					{
@@ -229,7 +233,8 @@ public class Conexion extends Thread
 					if(sePuedeHacerEnvioMultiple())
 					{
 //						out.println(servidor.getNombreArchMult().toString());
-						enviarInformacion(servidor.getNombreArchMult().toString());
+						String respuesta3 = servidor.getNombreArchMult().toString();
+						enviarInformacion(respuesta3.getBytes());
 						disminuirCLientesFaltantes();
 						enviarImagen(servidor.getNombreArchMult().toString());
 					}
@@ -244,7 +249,7 @@ public class Conexion extends Thread
 				cerrarSesion("Fallo al comenzar la sesion");
 //				in.close();
 //				out.close();
-				socket.close();
+//				socket.close();
 			}
 			catch (Exception e2)
 			{
@@ -299,11 +304,12 @@ public class Conexion extends Thread
 		{		
 			//enviar length del archivo en bytes
 			tamanioArchivo = (int) myFile.length();
+			String respuesta4 = tamanioArchivo + "";
 //			out.println(tamanioArchivo);
-			enviarInformacion(tamanioArchivo + "");
+			enviarInformacion(respuesta4.getBytes());
 			//Enviar hash del archivo
+			enviarInformacion(hash.getBytes());
 //			out.println(hash);
-			enviarInformacion(hash);
 
 			//Se inicia timer
 			tiempoInicio = System.currentTimeMillis();
@@ -311,12 +317,13 @@ public class Conexion extends Thread
 			//Enviar el archivo
 			int count;
 			int enviados = 0;
-			byte[] buffer = new byte[1024];
-			OutputStream outs = socket.getOutputStream();
+			byte[] bufferTemp = new byte[1024];
+//			OutputStream outs = socket.getOutputStream();
 			BufferedInputStream ins = new BufferedInputStream(new FileInputStream(myFile));
-			while ((count = ins.read(buffer)) >= 0) 
+			while ((count = ins.read(bufferTemp)) >= 0) 
 			{
-			     outs.write(buffer, 0, count);
+//			     outs.write(buffer, 0, count);
+			     enviarInformacion(bufferTemp);
 			     enviados++;
 			}
 			tiempoFin = System.currentTimeMillis();
@@ -331,43 +338,165 @@ public class Conexion extends Thread
 
 		}
 	}
-	
-	/**
-	 * Método que parte una cadena en arreglos de Bytes y luego los envía.
-	 * @param informacion
-	 * @throws IOException
-	 */
-	private void enviarInformacion(String informacion) throws IOException
+
+	private void enviarInformacion(byte[] buffer2) throws IOException
 	{
-		buffer = informacion.getBytes();
-		
-		if(buffer.length > Servidor.TAMANIOBUFFER)
+
+		socketSalida = new DatagramSocket(puertoAsignado);
+//		System.out.println("ENVIO LADO SERVIDOR:" + (new String(buffer2)) + ", puerto: " + puertoAsignado);
+//					byte[] buffer2 = informacion.getBytes();
+//		System.out.println("buffer.length: " + buffer2.length);
+		if(buffer2.length > buffer.length)
 		{
-			int numSubBuffers = (int) Math.ceil(buffer.length/Servidor.TAMANIOBUFFER);
+			System.out.println("Envio multiple requerido");
+			double doubleNumSubBuffers = ((double)buffer2.length)/((double)buffer.length);
+			int numSubBuffers = (int) doubleNumSubBuffers;
+			doubleNumSubBuffers = doubleNumSubBuffers*10;
+			if (doubleNumSubBuffers % 10 != 0)
+			{
+				numSubBuffers++;
+			}
+
 			ArrayList<byte[]> listaDeBuffers = new ArrayList<byte[]>();
+			System.out.println("Sub Buffers requeridos: " + numSubBuffers);
 			for(int i = 0; i < numSubBuffers; i++)
 			{
-				byte[] temp = listaDeBuffers.get(i);
-				temp = new byte[Servidor.TAMANIOBUFFER];
-				listaDeBuffers.set(i, temp);
+				//					byte[] temp = listaDeBuffers.get(i);
+				listaDeBuffers.add(new byte[buffer.length]);
 
-				for(int j = 0; j < Servidor.TAMANIOBUFFER; j++)
+				for(int j = 0; j < buffer.length; j++)
 				{
-					int contadorPosicion = j + (i*Servidor.TAMANIOBUFFER);
-					listaDeBuffers.get(i)[j] = buffer[contadorPosicion];
+					int contadorPosicion = j + (i*buffer.length);
+					//						listaDeBuffers.get(i)[j] = buffer2[contadorPosicion];
+					if(contadorPosicion < buffer2.length)
+					{
+						listaDeBuffers.get(i)[j] = buffer2[contadorPosicion];
+					}
+					else
+					{
+						listaDeBuffers.get(i)[j] = 4;
+					}
 				}
-				DatagramPacket paquete = new DatagramPacket(listaDeBuffers.get(i), listaDeBuffers.get(i).length, direccionDestino, puertoDeDestino);
-				socket.send(paquete);
+
 			}
+
+			for(int k = 0; k < listaDeBuffers.size(); k++)
+			{
+				System.out.println("TAMAÑO DE LISTA: " + listaDeBuffers.get(k).length);
+				DatagramPacket paquete = new DatagramPacket(listaDeBuffers.get(k), listaDeBuffers.get(k).length, direccionDestino, puertoDeDestino);
+				socketSalida.send(paquete);
+				String contenidoPaquete = new String(listaDeBuffers.get(k), 0, listaDeBuffers.get(k).length);
+				System.out.println("Paquete " + k + " enviado");
+				System.out.println(contenidoPaquete);
+			}
+			socketSalida.close();
 		}
 		else
 		{
-			DatagramPacket paquete = new DatagramPacket(buffer, buffer.length, direccionDestino, puertoDeDestino);
-			socket.send(paquete);
+			System.out.println("Envio sencillo");
+			DatagramPacket paquete = new DatagramPacket(buffer2, buffer2.length, direccionDestino, puertoDeDestino);
+			socketSalida.send(paquete);
+			socketSalida.close();
 		}
 	}
+	/**
+	 * Método que recibe paquetes UDP según un Timeout predefinido y un buffer predefinido.
+	 * @return byte[] si hay paquetes, null si no se recibe nada.
+	 * @throws IOException
+	 */
+	private byte[] recibirInformacion()throws IOException
+	{
+		socketEntrada = new DatagramSocket(puertoAsignado);
+		System.out.println("RECEPCION LADO SERVIDOR, puerto: " + puertoAsignado);
+		socketEntrada.setSoTimeout(TIMEOUTLECTURA);
+		byte[] respuesta = new byte[buffer.length];
+		boolean firstTime = true;
+		try
+		{
+			while(true)
+			{
+				DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+				socketEntrada.receive(packet);	
+				String temp = new String(packet.getData(), 0, packet.getData().length);
+				if(firstTime)
+				{
+					byte[] tempB = packet.getData();
+					System.arraycopy(tempB, 0, respuesta, 0, tempB.length);
+					firstTime = false;
+				}
+				else
+				{
+					byte[] tempA = new byte[respuesta.length];
+					System.arraycopy(respuesta, 0, tempA, 0, respuesta.length);
+					byte[] tempB = packet.getData();
+					respuesta = new byte[tempA.length + tempB.length];
+					System.arraycopy(tempA, 0, respuesta, 0, tempA.length);
+					System.arraycopy(tempB, 0, respuesta, tempA.length, tempB.length);
+				}
+				puertoDeDestino = packet.getPort();
+				direccionDestino = packet.getAddress();
+			}
+		}
+		catch (IOException e)
+		{
+			socketEntrada.close();
+			System.out.println("SERVIDOR: El tiempo de lectura expiró");
+		}
+		socketEntrada.close();
+		System.out.println("ARREGLO DE BYTES RECIBIDO: "+ new String(respuesta));
+		//        return respuesta;
+		boolean control = false;
+		if(respuesta.length == buffer.length)
+		{
+			for(int i = 0; i < buffer.length; i++)
+			{
+				if(respuesta[i] != 0)
+				{
+					control = true;
+				}
+			}
+			if(control == false)
+			{
+				respuesta = null;
+			}
+		}
+		if(respuesta != null)
+		{
+			int valorEncontrado = 0;
+			boolean control2 = false;
+			for(int i = 0; i < respuesta.length && respuesta != null; i++)
+			{
+				if(respuesta[i] == 4)
+				{
+					if(!control2)
+					{
+						valorEncontrado = i;
+						control2 = true;
+					}
+				}
+			}
+			byte[] respuestaFinal = new byte[valorEncontrado];
+			if(control2)
+			{
 
+				for(int i = 0; i < respuestaFinal.length; i++)
+				{
+					respuestaFinal[i] = respuesta[i];
+				}
+			}
+			else
+			{
+				respuestaFinal = respuesta;
+			}
+			return respuestaFinal;
+		}
+		else
+		{
+			return respuesta;
+		}
 
+	}
+	
 	// -----------------------------------------------------------------
 	// Getters and setters
 	// -----------------------------------------------------------------
@@ -390,10 +519,7 @@ public class Conexion extends Thread
 //		this.out = out;
 //	}
 //
-//	/**
-//	 * Metodo que obtiene el lector de entrada de la conexion actual.
-//	 * @return
-//	 */
+//
 //	public BufferedReader getIn()
 //	{
 //		return in;
@@ -426,21 +552,25 @@ public class Conexion extends Thread
 		this.estadoSesion = estadoSesion;
 	}
 
-	/**
-	 * Retorna el socket
-	 * @return
-	 */
-	public DatagramSocket getSocket()
+//	/**
+//	 * Retorna el socket
+//	 * @return
+//	 */
+//	public Socket getSocket()
+//	{
+//		return socket;
+//	}
+//
+//	/**
+//	 * Cambia el socket
+//	 * @param socket
+//	 */
+//	public void setSocket(Socket socket)
+//	{
+//		this.socket = socket;
+//	}
+	public boolean getIsRunning()
 	{
-		return socket;
-	}
-
-	/**
-	 * Cambia el socket
-	 * @param socket
-	 */
-	public void setSocket(DatagramSocket socket)
-	{
-		this.socket = socket;
+		return estadoSesion;
 	}
 }

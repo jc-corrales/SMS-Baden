@@ -114,17 +114,6 @@ public class Conexion extends Thread
 					{
 						listaDeBuffers.get(i)[j] = 4;
 					}
-					//						else
-					//						{
-					//							byte[] elementoTemporal = listaDeBuffers.get(i);
-					//							listaDeBuffers.remove(i);
-					//							byte[] arreglo = new byte[contadorPosicion-(i*Servidor.TAMANIOBUFFER)];
-					//							for(int m = 0; m < arreglo.length; m++)
-					//							{
-					//								arreglo[m] = elementoTemporal[m];
-					//							}
-					//							listaDeBuffers.add(arreglo);
-					//						}
 				}
 
 			}
@@ -143,7 +132,19 @@ public class Conexion extends Thread
 		else
 		{
 			System.out.println("Envio sencillo");
-			DatagramPacket paquete = new DatagramPacket(buffer2, buffer2.length, direccionDestino, puertoDeDestino);
+			byte[] bufferTemporal = new byte[Servidor.TAMANIOBUFFER];
+			for(int i = 0; i < bufferTemporal.length; i++)
+			{
+				if(i < buffer2.length)
+				{
+					bufferTemporal[i] = buffer2[i];
+				}
+				else
+				{
+					bufferTemporal[i] = 4;
+				}
+			}
+			DatagramPacket paquete = new DatagramPacket(bufferTemporal, bufferTemporal.length, direccionDestino, puertoDeDestino);
 			socketSalida.send(paquete);
 			socketSalida.close();
 		}
@@ -191,15 +192,6 @@ public class Conexion extends Thread
 			socketEntrada.close();
 			System.out.println("SERVIDOR: El tiempo de lectura expiró");
 		}
-		//        byte[] respuesta = new byte[Servidor.TAMANIOBUFFER*listaDeBuffers.size()];
-		//       for(int i = 0; i < listaDeBuffers.size(); i++)
-		//       {
-		//    	   for(int j = 0; j < Servidor.TAMANIOBUFFER; j++)
-		//    	   {
-		//    		   respuesta[(i*Servidor.TAMANIOBUFFER) + j] = listaDeBuffers.get(i)[j];
-		//    	   }
-		//       }
-		//		System.out.println("Servidor recibio: " + masterAnswer);
 		socketEntrada.close();
 		System.out.println("ARREGLO DE BYTES RECIBIDO: "+ new String(respuesta));
 		//        return respuesta;
@@ -246,7 +238,9 @@ public class Conexion extends Thread
 			{
 				respuestaFinal = respuesta;
 			}
+			System.out.println("RECEPCIÓN FINAL LADO SERVIDOR: " + new String(respuestaFinal));
 			return respuestaFinal;
+			
 		}
 		else
 		{

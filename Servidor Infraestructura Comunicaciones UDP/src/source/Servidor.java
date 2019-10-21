@@ -24,6 +24,8 @@ public class Servidor
 	 * Numero de Puerto de entrada.
 	 */
 	public static final int PUERTO = 11000;
+	public static final int PUERTODEINICIO = 12000;
+	public static final int TAMANIOBUFFER = 1024;
 
 	/**
 	 * Define con que algoritmo se crea el hash
@@ -36,17 +38,12 @@ public class Servidor
 	public static final String PATH_ARCHIVOS = "./data";
 	
 	/**
-	 * Tamanio del buffer de un paquete.
-	 */
-	public static final int TAMANIOBUFFER = 256;
-	
-	/**
 	 * Define path de ubicacion archivos
 	 */
 	
 
 	/**
-	 * DatagramSocket de entrada.
+	 * Socket de entrada.
 	 */
 	private static DatagramSocket puntoDeEntrada;
 
@@ -73,7 +70,7 @@ public class Servidor
 	/**
 	 * Es una coleccion con las conexiones que se estan llevando a cabo en este momento
 	 */
-	protected Collection <Conexion> conexiones;
+	protected static Vector <Conexion> conexiones;
 
 	/**
 	 * Representa el array de hash de los archivos => Key = Nombre del archivo, Value = hash del archivo
@@ -98,7 +95,7 @@ public class Servidor
 	/**
 	 * Atributo que guarda la informacion de una nueva conexion.
 	 */
-	private Conexion nuevaConexion;
+//	private Conexion nuevaConexion;
 	/**
 	 * Inicializa el servidor.
 	 * @param archivo El archivo de propiedades que tiene la configuracion del servidor - archivo != null
@@ -149,26 +146,26 @@ public class Servidor
 //	 * @param socketNuevoCliente El canal que permite la comunicacion con el nuevo usuario - socket != null
 //	 * @throws IOException Se lanza esta excepcion si se presentan problemas de comunicacion
 //	 */
-//	synchronized private void crearConexion ( ServerSocket socketNuevoCliente ) throws IOException
+//	synchronized private void crearConexion ( Socket socketNuevoCliente ) throws IOException
 //	{
 //		//nuevaConexion = new Conexion(socketNuevoCliente,0);
 //		conexiones.add(nuevaConexion);
 //		nuevaConexion.start();
 //	}
-//
-//	/**
-//	 * Carga la configuracion a partir de un archivo de propiedades
-//	 * @param archivo El archivo de propiedades que contiene la configuracion que requiere el servidor - archivo != null y el archivo debe contener la propiedad
-//	 *        "servidor.puerto" y las propiedades que requiere el administrador de usuarios.
-//	 * @throws Exception Se lanza esta excepcion si hay problemas cargando el archivo de propiedades.
-//	 */
-//	private void cargarConfiguracion( String archivo) throws Exception
-//	{
-//		FileInputStream fis = new FileInputStream( archivo );
-//		config = new Properties( );
-//		config.load( fis );
-//		fis.close( );
-//	}
+
+	/**
+	 * Carga la configuracion a partir de un archivo de propiedades
+	 * @param archivo El archivo de propiedades que contiene la configuracion que requiere el servidor - archivo != null y el archivo debe contener la propiedad
+	 *        "servidor.puerto" y las propiedades que requiere el administrador de usuarios.
+	 * @throws Exception Se lanza esta excepcion si hay problemas cargando el archivo de propiedades.
+	 */
+	private void cargarConfiguracion( String archivo) throws Exception
+	{
+		FileInputStream fis = new FileInputStream( archivo );
+		config = new Properties( );
+		config.load( fis );
+		fis.close( );
+	}
 
 //	/**
 //	 * Este metodo se encarga de recibir todas las conexiones entrantes y crear los encuentros cuando fuera necesario.
@@ -179,18 +176,12 @@ public class Servidor
 //		int puerto = Integer.parseInt( aux );
 //		try
 //		{
-//			puntoDeEntrada = new DatagramSocket( puerto );
+//			puntoDeEntrada = new DatagramSocketSocket( puerto );
 //
 //			while( true )
 //			{
-//				byte[] buffer = new byte[TAMANIOBUFFER];
-//				DatagramPacket packet = new DatagramPacket(buffer, TAMANIOBUFFER);
 //				// Esperar una nueva conexion
-//				DatagramSocket socketNuevoCliente = null;
-//				puntoDeEntrada.receive(packet);
-//				InetAddress direccion = packet.getAddress();
-//				int puerto = packet.getPort();
-//				
+//				Socket socketNuevoCliente = puntoDeEntrada.accept( );
 //
 //				// Intentar iniciar un encuentro con el nuevo cliente
 //				crearConexion( socketNuevoCliente );
@@ -218,9 +209,9 @@ public class Servidor
 	 * Si habia conexiones en la lista que ya habian terminado deben ser eliminados.
 	 * @return coleccion de conexiones.
 	 */
-	public Collection <Conexion> darListaDeUsuariosConectados()
+	public Vector <Conexion> darListaDeUsuariosConectados()
 	{
-		Collection <Conexion> listaDeUsuarios = new Vector<Conexion>();
+		Vector <Conexion> listaDeUsuarios = new Vector<Conexion>();
 		Iterator <Conexion>iter = conexiones.iterator( );
 		while( iter.hasNext( ) )
 		{
@@ -302,14 +293,16 @@ public class Servidor
 			puntoDeEntrada = new DatagramSocket(PUERTO);
 			while(status)
 			{
-				byte[] buffer = new byte[TAMANIOBUFFER];
-				DatagramPacket packet = new DatagramPacket(buffer, TAMANIOBUFFER);
-				puntoDeEntrada.receive(packet);
+//				Socket cliente = puntoDeEntrada.accept();
 				System.out.println("Cliente " + idThread + " inicio sesion.");
-				Conexion con = new Conexion(packet, idThread, servidor, servidor.nombresArchivosDisponibles);
-				exec.execute(con);
-				idThread++;
-				servidor.conexiones.add(con);
+//				Conexion con = new Conexion(puertoAsignado, puertoDestino, direccionDestino, TAMANIOBUFFER, idThread, servidor, servidor.nombresArchivosDisponibles);
+//				exec.execute(con);
+//				idThread++;
+//				servidor.conexiones.add(con);
+				byte[] bufferTemporal = new byte[TAMANIOBUFFER];
+				DatagramPacket packet = new DatagramPacket(bufferTemporal, bufferTemporal.length);
+            	puntoDeEntrada.receive(packet);
+            	asignacionDeSocket(packet, servidor);
 			}
 		}
 		catch (Exception e)
@@ -340,6 +333,62 @@ public class Servidor
 		}
 		return ret.toString();
 	}
+	
+	private static void asignacionDeSocket(DatagramPacket paquete, Servidor servidor)
+    {
+    	int puertoDestino = paquete.getPort();
+    	InetAddress direccion = paquete.getAddress();
+    	if(conexiones.size() > 0)
+    	{
+    		for(int i = 0; i < conexiones.size(); i++)
+        	{
+        		if(conexiones.get(i).getIsRunning() == false)
+        		{
+        			System.out.println("EN TEORIA CREA NUEVA CONEXION");
+//        			Conexion nuevaConexion = new Conexion(, puertoDestino, direccion, TAMANIOBUFFER);
+//        			int puertoAsignado = (PUERTODEINICIO + i);
+        			Conexion nuevaConexion;
+					try {
+						nuevaConexion = new Conexion((PUERTODEINICIO + i), puertoDestino, direccion, TAMANIOBUFFER, i, servidor, servidor.nombresArchivosDisponibles);
+						conexiones.set(i,nuevaConexion);
+	        			System.out.println("RUN EJECUTADO");
+	        			nuevaConexion.run();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+        		}
+        		else
+        		{
+//        			Conexion nuevaConexion = new Conexion((PUERTODEINICIO + i + 1), puertoDestino, direccion, TAMANIOBUFFER);
+        			try
+        			{
+        				Conexion nuevaConexion = new Conexion((PUERTODEINICIO + i + 1), puertoDestino, direccion, TAMANIOBUFFER, i + 1, servidor, servidor.nombresArchivosDisponibles);
+            			conexiones.add(nuevaConexion);
+            			nuevaConexion.run();
+        			}
+        			catch(IOException e)
+        			{
+        				e.printStackTrace();
+        			}
+        		}
+        	}
+    	}
+    	else
+    	{
+//    		Conexion nuevaConexion = new Conexion((PUERTODEINICIO), puertoDestino, direccion, TAMANIOBUFFER);
+    		try
+    		{
+    			Conexion nuevaConexion = new Conexion((PUERTODEINICIO), puertoDestino, direccion, TAMANIOBUFFER, 0, servidor, servidor.nombresArchivosDisponibles);
+    			conexiones.add(nuevaConexion);
+    			nuevaConexion.run();
+    		}
+    		catch(IOException e)
+    		{
+    			e.printStackTrace();
+    		}
+    	}
+    }
 
 	/**
 	 * @return the hashes
