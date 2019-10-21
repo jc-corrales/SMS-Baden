@@ -343,13 +343,13 @@ public class Conexion extends Thread
 	{
 
 		socketSalida = new DatagramSocket(puertoAsignado);
-//		System.out.println("ENVIO LADO SERVIDOR:" + (new String(buffer2)) + ", puerto: " + puertoAsignado);
-//					byte[] buffer2 = informacion.getBytes();
-//		System.out.println("buffer.length: " + buffer2.length);
-		if(buffer2.length > buffer.length)
+		System.out.println("ENVIO LADO SERVIDOR:" + (new String(buffer2)) + ", puerto: " + puertoAsignado);
+		//			byte[] buffer2 = informacion.getBytes();
+		System.out.println("buffer.length: " + buffer2.length);
+		if(buffer2.length > Servidor.TAMANIOBUFFER)
 		{
 			System.out.println("Envio multiple requerido");
-			double doubleNumSubBuffers = ((double)buffer2.length)/((double)buffer.length);
+			double doubleNumSubBuffers = ((double)buffer2.length)/((double)Servidor.TAMANIOBUFFER);
 			int numSubBuffers = (int) doubleNumSubBuffers;
 			doubleNumSubBuffers = doubleNumSubBuffers*10;
 			if (doubleNumSubBuffers % 10 != 0)
@@ -362,11 +362,11 @@ public class Conexion extends Thread
 			for(int i = 0; i < numSubBuffers; i++)
 			{
 				//					byte[] temp = listaDeBuffers.get(i);
-				listaDeBuffers.add(new byte[buffer.length]);
+				listaDeBuffers.add(new byte[Servidor.TAMANIOBUFFER]);
 
-				for(int j = 0; j < buffer.length; j++)
+				for(int j = 0; j < Servidor.TAMANIOBUFFER; j++)
 				{
-					int contadorPosicion = j + (i*buffer.length);
+					int contadorPosicion = j + (i*Servidor.TAMANIOBUFFER);
 					//						listaDeBuffers.get(i)[j] = buffer2[contadorPosicion];
 					if(contadorPosicion < buffer2.length)
 					{
@@ -394,7 +394,19 @@ public class Conexion extends Thread
 		else
 		{
 			System.out.println("Envio sencillo");
-			DatagramPacket paquete = new DatagramPacket(buffer2, buffer2.length, direccionDestino, puertoDeDestino);
+			byte[] bufferTemporal = new byte[Servidor.TAMANIOBUFFER];
+			for(int i = 0; i < bufferTemporal.length; i++)
+			{
+				if(i < buffer2.length)
+				{
+					bufferTemporal[i] = buffer2[i];
+				}
+				else
+				{
+					bufferTemporal[i] = 4;
+				}
+			}
+			DatagramPacket paquete = new DatagramPacket(bufferTemporal, bufferTemporal.length, direccionDestino, puertoDeDestino);
 			socketSalida.send(paquete);
 			socketSalida.close();
 		}
@@ -409,7 +421,7 @@ public class Conexion extends Thread
 		socketEntrada = new DatagramSocket(puertoAsignado);
 		System.out.println("RECEPCION LADO SERVIDOR, puerto: " + puertoAsignado);
 		socketEntrada.setSoTimeout(TIMEOUTLECTURA);
-		byte[] respuesta = new byte[buffer.length];
+		byte[] respuesta = new byte[Servidor.TAMANIOBUFFER];
 		boolean firstTime = true;
 		try
 		{
@@ -446,9 +458,9 @@ public class Conexion extends Thread
 		System.out.println("ARREGLO DE BYTES RECIBIDO: "+ new String(respuesta));
 		//        return respuesta;
 		boolean control = false;
-		if(respuesta.length == buffer.length)
+		if(respuesta.length == Servidor.TAMANIOBUFFER)
 		{
-			for(int i = 0; i < buffer.length; i++)
+			for(int i = 0; i < Servidor.TAMANIOBUFFER; i++)
 			{
 				if(respuesta[i] != 0)
 				{
@@ -488,7 +500,9 @@ public class Conexion extends Thread
 			{
 				respuestaFinal = respuesta;
 			}
+			System.out.println("RECEPCIÓN FINAL LADO SERVIDOR: " + new String(respuestaFinal));
 			return respuestaFinal;
+			
 		}
 		else
 		{
@@ -496,6 +510,7 @@ public class Conexion extends Thread
 		}
 
 	}
+
 	
 	// -----------------------------------------------------------------
 	// Getters and setters
